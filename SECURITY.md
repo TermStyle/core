@@ -64,7 +64,7 @@ function safeColor(color) {
 // ⚠️ Caution: User-provided template strings
 // Validate user input before using in templates
 const userInput = sanitizeInput(untrustedInput);
-termstyle`User said: ${termstyle.blue(userInput)}`;
+termstyle.template`User said: ${termstyle.blue(userInput)}`;
 ```
 
 ### ANSI Injection
@@ -100,13 +100,8 @@ The library includes memory management features:
 - Protection against memory leaks
 
 ```javascript
-// Configure memory limits
-termstyle.configure({
-  performance: {
-    cacheSize: 1000,  // Limit cache size
-    enableCaching: true
-  }
-});
+// Create a new formatter instance with specific options
+const myStyle = termstyle.create({ force: true });
 ```
 
 ## Best Practices

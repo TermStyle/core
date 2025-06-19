@@ -192,10 +192,10 @@ We use conventional commits for clear history:
 
 Example:
 ```
-feat: add HSL color support
+feat: add gradient color support
 
-- Implement HSL to RGB conversion
-- Add hsl() method to main API
+- Implement gradient effect for text
+- Add gradient() method to main API
 - Update documentation with examples
 - Add comprehensive tests
 

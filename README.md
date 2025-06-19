@@ -1,301 +1,345 @@
 # @termstyle/core
 
-<p align="center">
-  <img src="https://img.shields.io/npm/v/@termstyle/core" alt="npm version">
-  <img src="https://img.shields.io/npm/dm/@termstyle/core" alt="npm downloads">
-  <img src="https://img.shields.io/github/license/termstyle/core" alt="license">
-  <img src="https://img.shields.io/bundlephobia/minzip/@termstyle/core" alt="bundle size">
-  <img src="https://img.shields.io/github/stars/termstyle/core" alt="github stars">
-</p>
-
-A powerful, feature-rich CLI text formatting library that surpasses existing solutions with advanced styling capabilities, zero dependencies, and blazing performance.
+<div align="center">
+  <h1>TermStyle</h1>
+  <p>🎨 A powerful, feature-rich CLI text formatting library with zero dependencies</p>
+  
+  [![npm version](https://img.shields.io/npm/v/@termstyle/core.svg)](https://www.npmjs.com/package/@termstyle/core)
+  [![npm downloads](https://img.shields.io/npm/dm/@termstyle/core.svg)](https://www.npmjs.com/package/@termstyle/core)
+  [![bundle size](https://img.shields.io/bundlephobia/minzip/@termstyle/core)](https://bundlephobia.com/package/@termstyle/core)
+  [![license](https://img.shields.io/npm/l/@termstyle/core.svg)](https://github.com/termstyle/core/blob/main/LICENSE)
+</div>
 
 ## ✨ Features
 
-- 🎨 **Full Color Support** - 16 colors, 256 colors, and true color (16 million colors)
-- 🔗 **Chainable API** - Intuitive method chaining for combining styles
-- 🌈 **Gradients & Rainbow** - Beautiful gradient effects and rainbow text
-- 📦 **Box Drawing** - Create stunning boxes with various border styles
-- 📊 **Progress Bars** - Built-in progress indicators with customization
-- ✨ **Animations** - Spinners, blinking, pulsing, and typewriter effects
-- 🎯 **Template Literals** - Tagged template support for clean syntax
-- 🎨 **Themes** - Predefined themes and custom theme creation
-- 🔧 **Conditional Formatting** - Apply styles based on conditions
-- 🚀 **Zero Dependencies** - Lightweight and fast
-- 📝 **TypeScript Support** - Full type definitions included
-- 🖥️ **Cross-Platform** - Works on Windows, macOS, and Linux
-- ⚡ **High Performance** - Optimized for speed with intelligent caching
-- 🛡️ **Memory Safe** - Built-in memory management and garbage collection
+- 🎨 **Full Color Support** - 16, 256, and true color (16.7m colors)
+- 🔗 **Chainable API** - Intuitive and fluent interface
+- 🌈 **Gradient Effects** - Beautiful color transitions
+- 📦 **Zero Dependencies** - Lightweight and fast
+- 🚀 **High Performance** - Optimized with caching
+- 📊 **Progress Bars** - Customizable progress indicators
+- 🎭 **Animations** - Built-in spinner and animation effects
+- 🎯 **TypeScript** - Full type definitions included
+- 🖼️ **Box Drawing** - Create boxes around content
+- 🎨 **Themes** - Predefined and custom theme support
 
-## 🚀 Installation
+## 📦 Installation
 
 ```bash
 npm install @termstyle/core
 ```
 
-```bash
-yarn add @termstyle/core
-```
-
-```bash
-pnpm add @termstyle/core
-```
-
-## 📖 Quick Start
+## 🚀 Quick Start
 
 ```javascript
+const termstyle = require('@termstyle/core').default;
+// or with ES modules
 import termstyle from '@termstyle/core';
 
 // Basic colors
-console.log(termstyle.red('Error!'));
-console.log(termstyle.green.bold('Success!'));
-console.log(termstyle.blue.underline('Information'));
+console.log(termstyle.red('Error message'));
+console.log(termstyle.green('Success message'));
+console.log(termstyle.blue('Info message'));
 
-// Chaining styles
-console.log(termstyle.red.bold.underline('Important Error'));
-console.log(termstyle.bgYellow.black('Warning'));
+// Styles
+console.log(termstyle.bold('Bold text'));
+console.log(termstyle.italic('Italic text'));
+console.log(termstyle.underline('Underlined text'));
 
-// RGB and Hex colors
-console.log(termstyle.rgb(255, 128, 0)('Orange'));
-console.log(termstyle.hex('#ff00ff')('Magenta'));
-console.log(termstyle.bgHex('#1e90ff').white('Blue Background'));
-```
-
-## 🎨 Color Support
-
-### Basic Colors
-```javascript
-// Foreground colors
-termstyle.black('text')
-termstyle.red('text')
-termstyle.green('text')
-termstyle.yellow('text')
-termstyle.blue('text')
-termstyle.magenta('text')
-termstyle.cyan('text')
-termstyle.white('text')
+// Chaining
+console.log(termstyle.red.bold('Bold red text'));
+console.log(termstyle.blue.underline.italic('Blue underlined italic'));
 
 // Background colors
-termstyle.bgBlack('text')
-termstyle.bgRed('text')
-termstyle.bgGreen('text')
-// ... and more
+console.log(termstyle.bgRed.white('White text on red background'));
+console.log(termstyle.bgGreen.black('Black text on green background'));
+```
+
+## 🎨 Colors
+
+### Basic Colors
+
+```javascript
+// Foreground colors
+termstyle.black('Black text')
+termstyle.red('Red text')
+termstyle.green('Green text')
+termstyle.yellow('Yellow text')
+termstyle.blue('Blue text')
+termstyle.magenta('Magenta text')
+termstyle.cyan('Cyan text')
+termstyle.white('White text')
+termstyle.gray('Gray text')
+
+// Background colors
+termstyle.bgBlack('Text on black background')
+termstyle.bgRed('Text on red background')
+termstyle.bgGreen('Text on green background')
+termstyle.bgYellow('Text on yellow background')
+termstyle.bgBlue('Text on blue background')
+termstyle.bgMagenta('Text on magenta background')
+termstyle.bgCyan('Text on cyan background')
+termstyle.bgWhite('Text on white background')
+termstyle.bgGray('Text on gray background')
 ```
 
 ### Advanced Colors
+
 ```javascript
-// RGB colors (0-255)
-termstyle.rgb(255, 128, 0)('Orange text')
-termstyle.bgRgb(255, 0, 255)('Magenta background')
-
 // Hex colors
-termstyle.hex('#ff8000')('Orange text')
-termstyle.bgHex('#ff00ff')('Magenta background')
+termstyle.hex('#ff6b35')('Orange text')
+termstyle.bgHex('#4ecdc4')('Text on teal background')
 
-// HSL colors
-termstyle.hsl(120, 100, 50)('Pure green')
+// RGB colors
+termstyle.rgb(255, 107, 53)('RGB orange text')
+termstyle.bgRgb(78, 205, 196)('Text on RGB teal background')
+
+// ANSI 256 colors (0-255)
+termstyle.color(196)('ANSI 256 red')
+termstyle.bgColor(46)('Text on ANSI 256 green background')
 ```
 
-## 🎭 Text Styles
+## ✨ Text Styles
 
 ```javascript
 termstyle.bold('Bold text')
-termstyle.dim('Dimmed text')
+termstyle.dim('Dim text')
 termstyle.italic('Italic text')
 termstyle.underline('Underlined text')
-termstyle.strikethrough('Strikethrough text')
-termstyle.inverse('Inverted colors')
+termstyle.inverse('Inverse text')
 termstyle.hidden('Hidden text')
+termstyle.strikethrough('Strikethrough text')
+
+// Combine multiple styles
+termstyle.bold.italic.underline('Bold, italic, and underlined')
+termstyle.red.bgYellow.bold('Bold red text on yellow background')
 ```
 
-## 🌈 Advanced Features
+## 🌈 Special Effects
 
-### Gradients
+### Gradient Text
+
 ```javascript
-termstyle.gradient(['#ff0000', '#00ff00', '#0000ff'])('Rainbow text')
-termstyle.gradientRgb([[255,0,0], [0,255,0], [0,0,255]])('RGB gradient')
+// Rainbow gradient
+termstyle.rainbow('Rainbow colored text')
+
+// Custom gradient
+termstyle.gradient('Gradient text', ['red', 'yellow', 'green'])
+
+// Hex gradient
+termstyle.gradient('Smooth gradient', ['#ff0000', '#00ff00', '#0000ff'])
 ```
 
-### Animations
+### Box Drawing
+
 ```javascript
-// Spinner animation
-const spinner = termstyle.spinner('dots');
-spinner.start('Loading...');
-setTimeout(() => spinner.stop(), 3000);
+// Simple box
+termstyle.box('Hello World')
+// ┌───────────┐
+// │Hello World│
+// └───────────┘
 
-// Blinking text
-console.log(termstyle.blink('Attention!'));
-
-// Typewriter effect
-termstyle.typewriter('Hello World!', { speed: 100 });
+// Customized box
+termstyle.box('Important Message', {
+  padding: 1,
+  margin: 1,
+  borderStyle: 'double',
+  borderColor: 'blue',
+  align: 'center'
+})
 ```
 
 ### Progress Bars
+
 ```javascript
-const progress = termstyle.progressBar({
+// Create a progress bar
+const progressBar = termstyle.progressBar({
+  total: 100,
   width: 40,
   complete: '█',
   incomplete: '░'
 });
 
-for (let i = 0; i <= 100; i += 10) {
-  progress.update(i);
-  // Update progress
-}
+// Update progress
+progressBar.update(25);  // 25%
+console.log(progressBar.render());
+// ██████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 25%
+
+// Simple progress bar
+console.log(termstyle.bar(50, 100, { width: 20 }));
+// ██████████░░░░░░░░░░
 ```
 
-### Box Drawing
+### Spinners
+
 ```javascript
-console.log(termstyle.box('Hello World!', {
-  padding: 1,
-  margin: 1,
-  borderStyle: 'double',
-  borderColor: 'blue'
-}));
+// Create a spinner
+const spinner = termstyle.spinner('Loading...');
+spinner.start();
+
+// Update text
+spinner.text = 'Processing...';
+
+// Stop with success
+spinner.succeed('Complete!');
+
+// Different spinner styles
+const customSpinner = termstyle.spinner({
+  text: 'Loading',
+  spinner: 'dots2' // dots, line, circle, etc.
+});
 ```
 
-### Template Literals
+## 🎯 Conditional Formatting
+
 ```javascript
+// Conditional styling
+const isError = true;
+console.log(
+  termstyle.conditional(isError).red('Error occurred')
+);
+
+// Conditional chains
+termstyle.conditional(process.env.DEBUG).gray('Debug info')
+
+// Status formatters
+const status = termstyle.createStatusFormatter();
+console.log(status.success('Operation completed'));
+console.log(status.error('Operation failed'));
+console.log(status.warning('Please review'));
+console.log(status.info('For your information'));
+```
+
+## 📝 Template Literals
+
+```javascript
+// Template literal support
 const name = 'World';
-const message = termstyle`Hello ${termstyle.blue.bold(name)}!`;
-console.log(message);
-```
+console.log(termstyle.red`Hello ${name}!`);
 
-### Conditional Formatting
-```javascript
-const status = 'error';
-console.log(termstyle.conditional(status, {
-  error: termstyle.red.bold,
-  warning: termstyle.yellow,
-  success: termstyle.green
-})('Status message'));
+// Complex templates
+const user = 'John';
+const score = 95;
+console.log(
+  termstyle.template`User ${termstyle.green(user)} achieved ${
+    termstyle.yellow.bold(`${score}%`)
+  } success rate!`
+);
 ```
 
 ## 🎨 Themes
 
 ```javascript
-// Apply predefined themes
-termstyle.theme('dark');
-termstyle.theme('light');
-termstyle.theme('cyberpunk');
+// Use built-in themes
+const themes = termstyle.themes;
+const theme = themes.get('ocean');
 
-// Create custom themes
-termstyle.createTheme('myTheme', {
-  primary: '#3498db',
-  secondary: '#2ecc71',
-  error: '#e74c3c',
-  warning: '#f39c12'
+// Create custom theme
+const customTheme = new termstyle.ThemeManager();
+customTheme.create('myTheme', {
+  primary: '#007acc',
+  success: '#4caf50',
+  error: '#f44336',
+  warning: '#ff9800'
 });
 
-termstyle.theme('myTheme');
+// Apply theme colors
+const colors = customTheme.applyTheme();
+console.log(colors.primary('Primary text'));
+console.log(colors.success('Success message'));
 ```
 
-## 🔧 API Reference
-
-### Core Methods
-
-| Method | Description | Example |
-|--------|-------------|---------|
-| `termstyle.red()` | Apply red color | `termstyle.red('text')` |
-| `termstyle.bold()` | Apply bold style | `termstyle.bold('text')` |
-| `termstyle.rgb()` | Apply RGB color | `termstyle.rgb(255, 0, 0)('text')` |
-| `termstyle.hex()` | Apply hex color | `termstyle.hex('#ff0000')('text')` |
-| `termstyle.gradient()` | Apply gradient | `termstyle.gradient(['red', 'blue'])('text')` |
-
-### Utility Methods
-
-| Method | Description | Example |
-|--------|-------------|---------|
-| `termstyle.strip()` | Remove ANSI codes | `termstyle.strip(styledText)` |
-| `termstyle.length()` | Get text length without ANSI | `termstyle.length(styledText)` |
-| `termstyle.supports()` | Check color support | `termstyle.supports.trueColor` |
-
-## 🛠️ Configuration
+## 🛠️ Utilities
 
 ```javascript
-// Configure global settings
-termstyle.configure({
-  level: 3, // Color support level (0-3)
-  colorMode: 'auto', // 'auto', 'force', 'disable'
-  theme: 'default',
-  cache: true // Enable/disable caching
+// Strip ANSI codes
+const styled = termstyle.red.bold('Styled text');
+const plain = termstyle.strip(styled);
+console.log(plain); // 'Styled text'
+
+// Check color support
+console.log(termstyle.supportsColor); // true/false
+console.log(termstyle.level); // 0, 1, 2, or 3
+
+// Get terminal info
+const info = termstyle.getTerminalInfo();
+console.log(info);
+// {
+//   supportsColor: true,
+//   colorLevel: 3,
+//   columns: 120,
+//   rows: 30
+// }
+```
+
+## 🔧 Advanced Usage
+
+### Create Custom Formatter
+
+```javascript
+// Create a custom formatter instance
+const myStyle = termstyle.create({ force: true });
+
+// Log formatter
+const logger = termstyle.createLogFormatter({
+  timestamp: true,
+  usePrefix: true
 });
+
+console.log(logger.info('Information message'));
+console.log(logger.warn('Warning message'));
+console.log(logger.error('Error message'));
+console.log(logger.debug('Debug message'));
+```
+
+### Method Chaining
+
+```javascript
+// Complex chaining
+termstyle
+  .red
+  .bgYellow
+  .bold
+  .underline
+  .italic('Complex styled text');
+
+// Conditional chaining
+const productionError = termstyle.conditional(isProduction).red('Production error!');
+console.log(productionError);
 ```
 
 ## 📊 Performance
 
-@termstyle/core is optimized for performance:
+TermStyle is optimized for performance:
 
-- **Intelligent Caching**: Reuses styled strings to avoid recomputation
-- **Lazy Evaluation**: Styles are only applied when needed
-- **Memory Management**: Automatic cleanup and garbage collection
-- **Zero Dependencies**: No external dependencies for minimal bundle size
+- Lazy evaluation of styles
+- Intelligent caching system
+- Minimal overhead
+- Zero dependencies
 
-## 🌐 Browser Support
-
-@termstyle/core primarily targets Node.js environments but includes browser compatibility:
-
-- **Node.js**: Full feature support
-- **Browsers**: Basic color support (depends on browser console)
-- **Terminal Detection**: Automatic detection of color capabilities
-
-## 🔍 Terminal Compatibility
-
-| Terminal | Basic Colors | 256 Colors | True Color | Notes |
-|----------|--------------|------------|------------|-------|
-| Terminal.app | ✅ | ✅ | ✅ | macOS default |
-| iTerm2 | ✅ | ✅ | ✅ | Recommended for macOS |
-| Windows Terminal | ✅ | ✅ | ✅ | Windows 10/11 |
-| Command Prompt | ✅ | ❌ | ❌ | Legacy Windows |
-| VS Code Terminal | ✅ | ✅ | ✅ | All platforms |
-| Hyper | ✅ | ✅ | ✅ | Cross-platform |
-
-## 📚 Documentation
-
-- [API Reference](./API.md) - Complete API documentation
-- [Examples](./EXAMPLES.md) - Usage examples and recipes
-- [Contributing](./CONTRIBUTING.md) - How to contribute
-- [Changelog](./CHANGELOG.md) - Version history
+```javascript
+// Efficient for loops
+const styled = termstyle.red.bold;
+for (let i = 0; i < 1000; i++) {
+  console.log(styled(`Item ${i}`));
+}
+```
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md) for details.
-
-### Development Setup
-
-```bash
-# Clone the repository
-git clone https://github.com/termstyle/core.git
-cd core
-
-# Install dependencies
-npm install
-
-# Run tests
-npm test
-
-# Build the project
-npm run build
-
-# Run type checking
-npm run typecheck
-```
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
 ## 📄 License
 
-MIT License - see [LICENSE](./LICENSE) for details.
-
-## 🙏 Acknowledgments
-
-- Inspired by [chalk](https://github.com/chalk/chalk) and [colors.js](https://github.com/Marak/colors.js)
-- Built with performance and developer experience in mind
-- Thanks to all contributors and the open source community
-
-## 📞 Support
-
-- 🐛 [Report Issues](https://github.com/termstyle/core/issues)
-- 💬 [Discussions](https://github.com/termstyle/core/discussions)
+MIT © [TermStyle](https://github.com/termstyle)
 
 ---
 
-<p align="center">Made with ❤️ by the TermStyle team</p>
+<div align="center">
+  <p>Made with ❤️ by the TermStyle team</p>
+  <p>
+    <a href="https://github.com/termstyle/core">GitHub</a> •
+    <a href="https://www.npmjs.com/package/@termstyle/core">npm</a> •
+    <a href="https://github.com/termstyle/core/issues">Issues</a>
+  </p>
+</div>

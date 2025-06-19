@@ -10,13 +10,14 @@ Comprehensive examples and usage patterns for @termstyle/core.
 - [Advanced Features](#advanced-features)
 - [Real-World Applications](#real-world-applications)
 - [Performance Tips](#performance-tips)
-- [Troubleshooting](#troubleshooting)
 
 ## Basic Usage
 
 ### Simple Colors
 
 ```javascript
+const termstyle = require('@termstyle/core').default;
+// or with ES modules
 import termstyle from '@termstyle/core';
 
 // Basic foreground colors
@@ -80,22 +81,22 @@ console.log(termstyle.hex('ff8000')('Orange'));
 console.log(termstyle.bgHex('#1e90ff').white('Dodger blue bg'));
 ```
 
-### HSL Colors
+### ANSI 256 Colors
 
 ```javascript
-// HSL format: Hue (0-360), Saturation (0-100), Lightness (0-100)
-console.log(termstyle.hsl(0, 100, 50)('Red'));      // Pure red
-console.log(termstyle.hsl(120, 100, 50)('Green'));  // Pure green
-console.log(termstyle.hsl(240, 100, 50)('Blue'));   // Pure blue
+// ANSI 256 color codes (0-255)
+console.log(termstyle.color(196)('ANSI red'));
+console.log(termstyle.color(46)('ANSI green'));
+console.log(termstyle.color(21)('ANSI blue'));
+console.log(termstyle.color(208)('ANSI orange'));
 
-// Pastel colors (high lightness, medium saturation)
-console.log(termstyle.hsl(0, 70, 80)('Pastel red'));
-console.log(termstyle.hsl(120, 70, 80)('Pastel green'));
-console.log(termstyle.hsl(240, 70, 80)('Pastel blue'));
+// Background ANSI 256 colors
+console.log(termstyle.bgColor(196)('Text on ANSI red'));
+console.log(termstyle.bgColor(46)('Text on ANSI green'));
 
-// Dark colors (low lightness)
-console.log(termstyle.hsl(0, 100, 25)('Dark red'));
-console.log(termstyle.hsl(120, 100, 25)('Dark green'));
+// Using color with RGB arrays
+console.log(termstyle.color([255, 0, 0])('RGB red'));
+console.log(termstyle.color([0, 255, 0])('RGB green'));
 ```
 
 ## Style Combinations
@@ -128,24 +129,23 @@ console.log(error(`Error: ${highlight('file.txt')} not found`));
 ### Gradients
 
 ```javascript
-// Simple two-color gradient
-console.log(termstyle.gradient(['red', 'blue'], 'Gradient text'));
+// Rainbow gradient
+console.log(termstyle.rainbow('Rainbow colored text'));
 
-// Multi-color gradient
-console.log(termstyle.gradient([
-  '#ff0000', '#ff8000', '#ffff00', '#00ff00', '#0000ff', '#8000ff'
-], 'Rainbow gradient'));
+// Custom gradient with color names
+console.log(termstyle.gradient('Gradient text', { 
+  colors: ['red', 'yellow', 'green'] 
+}));
+
+// Hex color gradient
+console.log(termstyle.gradient('Smooth gradient', { 
+  colors: ['#ff0000', '#00ff00', '#0000ff'] 
+}));
 
 // RGB array gradient
-console.log(termstyle.gradientRgb([
-  [255, 0, 0],    // Red
-  [255, 255, 0],  // Yellow
-  [0, 255, 0]     // Green
-], 'Traffic light colors'));
-
-// Gradient function
-const fireGradient = termstyle.gradient(['#ff0000', '#ff8000', '#ffff00']);
-console.log(fireGradient('Fire colors'));
+console.log(termstyle.gradient('RGB gradient', { 
+  colors: [[255,0,0], [0,255,0], [0,0,255]] 
+}));
 ```
 
 ### Animations
@@ -154,74 +154,69 @@ console.log(fireGradient('Fire colors'));
 
 ```javascript
 // Basic spinner
-const spinner = termstyle.spinner('dots');
-spinner.start('Loading...');
+const spinner = termstyle.spinner('Loading...');
+spinner.start();
 setTimeout(() => spinner.stop(), 3000);
 
-// Different spinner types
-const lineSpinner = termstyle.spinner('line');
-lineSpinner.start('Processing');
-setTimeout(() => lineSpinner.succeed('Complete!'), 2000);
+// Spinner with different types
+const customSpinner = termstyle.spinner({
+  text: 'Processing',
+  spinner: 'dots2'
+});
+customSpinner.start();
 
-// Custom completion
-const taskSpinner = termstyle.spinner('arrow');
-taskSpinner.start('Downloading file...');
+// Spinner completion methods
 setTimeout(() => {
-  try {
-    // Simulate task
-    taskSpinner.succeed('File downloaded successfully');
-  } catch (error) {
-    taskSpinner.fail('Download failed');
-  }
-}, 3000);
+  // Different ways to stop
+  customSpinner.succeed('Complete!');  // ✓ with green text
+  // or customSpinner.fail('Failed!');  // ✗ with red text
+  // or customSpinner.warn('Warning!'); // ⚠ with yellow text
+  // or customSpinner.info('Info');     // ℹ with blue text
+}, 2000);
 ```
 
-#### Typewriter Effect
+#### Animations
 
 ```javascript
-// Basic typewriter
-await termstyle.typewriter('Hello, World!');
-
-// Custom speed
-await termstyle.typewriter('Slow typing...', { speed: 200 });
-await termstyle.typewriter('Fast typing!', { speed: 30 });
-
-// Custom cursor
-await termstyle.typewriter('Custom cursor', { 
-  cursor: '_',
-  cursorBlink: false 
+// Create animated text
+const anim = termstyle.animate('Animated text', 'pulse', {
+  duration: 3000,
+  interval: 500
 });
+anim.start();
 
-// Chain with other effects
-const text = termstyle.green.bold('Success message');
-await termstyle.typewriter(text, { speed: 50 });
+// Stop animation later
+setTimeout(() => {
+  anim.stop();
+}, 5000);
 ```
 
 ### Progress Bars
 
 ```javascript
-// Basic progress bar
-const progress = termstyle.progressBar();
-for (let i = 0; i <= 100; i += 5) {
-  progress.update(i);
-  await new Promise(resolve => setTimeout(resolve, 100));
-}
-
-// Custom progress bar
-const customProgress = termstyle.progressBar({
-  width: 50,
-  complete: '●',
-  incomplete: '○',
-  format: ':bar :percent (:current/:total)'
+// Create a progress bar instance
+const progressBar = termstyle.progressBar({
+  total: 100,
+  width: 40,
+  complete: '█',
+  incomplete: '░'
 });
 
-// File download simulation
-for (let downloaded = 0; downloaded <= 1000; downloaded += 50) {
-  const percent = (downloaded / 1000) * 100;
-  customProgress.update(percent);
-  await new Promise(resolve => setTimeout(resolve, 100));
-}
-customProgress.complete();
+// Update progress
+progressBar.update(25);  // 25%
+console.log(progressBar.render());
+// ██████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 25%
+
+// Or use tick to increment
+progressBar.tick(25);  // Now at 50%
+console.log(progressBar.render());
+
+// Simple progress bar string
+console.log(termstyle.bar(0.5, 1, { width: 20 }));
+// ██████████░░░░░░░░░░
+
+// Complete the progress
+progressBar.complete();
 ```
 
 ### Box Drawing
@@ -238,28 +233,27 @@ console.log(termstyle.box('Important Notice', {
 }));
 
 // Complex box with title
-console.log(termstyle.box(`
-Welcome to TermStyle!
+const boxContent = `Welcome to TermStyle!
 
 This is a demo of the box drawing feature.
-You can customize borders, colors, and layout.
-`, {
-  padding: [1, 2],
+You can customize borders, colors, and layout.`;
+
+console.log(termstyle.box(boxContent, {
+  padding: 1,
   margin: 1,
   borderStyle: 'round',
   borderColor: 'blue',
   title: '🎨 TermStyle Demo',
   titleAlignment: 'center',
   width: 50,
-  textAlignment: 'center'
+  align: 'center'
 }));
 
 // Warning box
 console.log(termstyle.box('⚠️  This action cannot be undone!', {
   padding: 1,
   borderStyle: 'bold',
-  borderColor: 'yellow',
-  backgroundColor: 'bgBlack'
+  borderColor: 'yellow'
 }));
 ```
 
@@ -269,25 +263,24 @@ console.log(termstyle.box('⚠️  This action cannot be undone!', {
 // Basic template usage
 const name = 'Alice';
 const status = 'online';
-const message = termstyle`
+console.log(termstyle.template`
 User: ${termstyle.blue.bold(name)}
 Status: ${termstyle.green(status)}
 Last seen: ${termstyle.dim('2 minutes ago')}
-`;
-console.log(message);
+`);
 
 // Complex template with conditions
 function userCard(user) {
   const statusColor = user.online ? termstyle.green : termstyle.red;
   const roleColor = user.role === 'admin' ? termstyle.yellow : termstyle.white;
   
-  return termstyle`
+  return termstyle.template`
 ${termstyle.bold('User Profile')}
 ────────────────
 Name: ${termstyle.cyan(user.name)}
 Role: ${roleColor(user.role)}
 Status: ${statusColor(user.online ? 'Online' : 'Offline')}
-${user.premium ? termstyle.gold('⭐ Premium Member') : ''}
+${user.premium ? termstyle.yellow('⭐ Premium Member') : ''}
   `;
 }
 
@@ -302,53 +295,29 @@ console.log(userCard({
 ### Conditional Formatting
 
 ```javascript
-// Log level formatting
-function logMessage(level, message) {
-  const formatter = termstyle.conditional(level, {
-    error: termstyle.red.bold,
-    warn: termstyle.yellow,
-    info: termstyle.blue,
-    debug: termstyle.gray,
-    success: termstyle.green
-  }, termstyle.white);
-  
-  const timestamp = termstyle.dim(new Date().toISOString());
-  const levelText = formatter(level.toUpperCase().padEnd(7));
-  
-  console.log(`${timestamp} ${levelText} ${message}`);
-}
+// Conditional styling
+const isError = true;
+console.log(
+  termstyle.conditional(isError).red('Error occurred')
+);
 
-logMessage('error', 'Database connection failed');
-logMessage('warn', 'Deprecated API usage detected');
-logMessage('info', 'Server started on port 3000');
-logMessage('success', 'All tests passed');
+// Status formatters
+const status = termstyle.createStatusFormatter();
+console.log(status.success('Operation completed'));
+console.log(status.error('Operation failed'));
+console.log(status.warning('Please review'));
+console.log(status.info('For your information'));
 
-// Status-based formatting
-function displayStatus(status, message) {
-  const styles = {
-    pending: termstyle.yellow,
-    running: termstyle.blue.bold,
-    success: termstyle.green.bold,
-    failed: termstyle.red.bold,
-    cancelled: termstyle.gray
-  };
-  
-  const icon = {
-    pending: '⏳',
-    running: '🔄',
-    success: '✅',
-    failed: '❌',
-    cancelled: '🚫'
-  };
-  
-  const formatter = termstyle.conditional(status, styles, termstyle.white);
-  console.log(`${icon[status]} ${formatter(message)}`);
-}
+// Log formatter
+const logger = termstyle.createLogFormatter({
+  timestamp: true,
+  usePrefix: true
+});
 
-displayStatus('pending', 'Task queued');
-displayStatus('running', 'Processing data...');
-displayStatus('success', 'Task completed');
-displayStatus('failed', 'Task failed with errors');
+console.log(logger.info('Server started'));
+console.log(logger.warn('Low memory'));
+console.log(logger.error('Connection failed'));
+console.log(logger.debug('Debug info'));
 ```
 
 ## Real-World Applications
@@ -366,10 +335,7 @@ class CLIApp {
   }
   
   showHeader() {
-    console.log(termstyle.box(termstyle`
-${termstyle.bold.blue(this.name)} ${termstyle.dim(`v${this.version}`)}
-${termstyle.italic('A powerful CLI tool')}
-    `, {
+    console.log(termstyle.box(`${termstyle.bold.blue(this.name)} ${termstyle.dim(`v${this.version}`)}\n${termstyle.italic('A powerful CLI tool')}`, {
       padding: 1,
       borderStyle: 'round',
       borderColor: 'blue'
@@ -377,7 +343,7 @@ ${termstyle.italic('A powerful CLI tool')}
   }
   
   showMenu() {
-    console.log(termstyle`
+    console.log(`
 ${termstyle.bold('Available Commands:')}
 
   ${termstyle.green('start')}     Start the application
@@ -389,17 +355,19 @@ ${termstyle.bold('Available Commands:')}
   }
   
   async processCommand(command) {
-    const spinner = termstyle.spinner('dots');
+    const spinner = termstyle.spinner('Starting...');
     
     switch (command) {
       case 'start':
-        spinner.start('Starting application...');
+        spinner.start();
+        spinner.update('Starting application...');
         await this.simulateTask(2000);
         spinner.succeed('Application started successfully');
         break;
         
       case 'stop':
-        spinner.start('Stopping application...');
+        spinner.start();
+        spinner.update('Stopping application...');
         await this.simulateTask(1000);
         spinner.succeed('Application stopped');
         break;
@@ -419,14 +387,14 @@ ${termstyle.bold('Available Commands:')}
   }
   
   showConfig() {
-    console.log(termstyle.box(termstyle`
-${termstyle.bold('Configuration')}
+    const configText = `${termstyle.bold('Configuration')}
 
 Database: ${termstyle.green('Connected')}
 Cache: ${termstyle.yellow('Enabled')}
 Debug: ${termstyle.red('Disabled')}
-Port: ${termstyle.blue('3000')}
-    `, {
+Port: ${termstyle.blue('3000')}`;
+    
+    console.log(termstyle.box(configText, {
       padding: 1,
       borderStyle: 'single',
       title: '⚙️ Settings'
@@ -438,7 +406,7 @@ Port: ${termstyle.blue('3000')}
     const memory = '145 MB';
     const cpu = '12%';
     
-    console.log(termstyle`
+    console.log(`
 ${termstyle.bold('System Status')}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -527,8 +495,8 @@ class TestRunner {
   }
   
   async runTest(testName, testFn) {
-    const spinner = termstyle.spinner('dots');
-    spinner.start(`Running ${testName}`);
+    const spinner = termstyle.spinner(`Running ${testName}`);
+    spinner.start();
     
     try {
       await testFn();
@@ -548,9 +516,7 @@ class TestRunner {
   
   showSummary() {
     const total = this.passed + this.failed + this.skipped;
-    
-    console.log('\n' + termstyle.box(termstyle`
-${termstyle.bold('Test Results')}
+    const summaryText = `${termstyle.bold('Test Results')}
 
 ${termstyle.green('Passed:')}  ${this.passed}/${total}
 ${termstyle.red('Failed:')}  ${this.failed}/${total}
@@ -559,8 +525,9 @@ ${termstyle.yellow('Skipped:')} ${this.skipped}/${total}
 ${this.failed === 0 
   ? termstyle.green.bold('All tests passed! 🎉') 
   : termstyle.red.bold(`${this.failed} test(s) failed`)
-}
-    `, {
+}`;
+    
+    console.log('\n' + termstyle.box(summaryText, {
       padding: 1,
       borderStyle: this.failed === 0 ? 'round' : 'single',
       borderColor: this.failed === 0 ? 'green' : 'red'
@@ -606,139 +573,56 @@ for (let i = 0; i < 1000; i++) {
 }
 ```
 
-### Caching for Performance
+### Using Themes
 
 ```javascript
-// Enable caching for repeated operations
-termstyle.configure({ cache: true });
+// Create a theme manager
+const themeManager = new termstyle.ThemeManager();
 
-// Cache style combinations
-const styleCache = new Map();
+// Use built-in themes
+themeManager.setTheme('dark');
 
-function getStyle(type) {
-  if (!styleCache.has(type)) {
-    const styles = {
-      error: termstyle.red.bold,
-      warning: termstyle.yellow,
-      info: termstyle.blue,
-      success: termstyle.green
-    };
-    styleCache.set(type, styles[type] || termstyle.white);
-  }
-  return styleCache.get(type);
-}
-
-// Use cached styles
-console.log(getStyle('error')('Error message'));
-console.log(getStyle('success')('Success message'));
-```
-
-### Memory Management
-
-```javascript
-// For high-frequency operations, consider manual cleanup
-const styles = [];
-
-// Create many styles
-for (let i = 0; i < 10000; i++) {
-  styles.push(termstyle.rgb(i % 255, 100, 200));
-}
-
-// Clear when done
-styles.length = 0;
-
-// Or use the built-in memory management
-termstyle.configure({
-  performance: {
-    enableCaching: true,
-    cacheSize: 1000  // Limit cache size
+// Register custom theme
+themeManager.registerTheme('custom', {
+  colors: {
+    primary: '#007acc',
+    success: '#4caf50',
+    error: '#f44336',
+    warning: '#ff9800'
   }
 });
+
+// Apply theme
+const themed = themeManager.applyTheme();
+console.log(themed.primary('Primary text'));
+console.log(themed.success('Success message'));
 ```
 
-## Troubleshooting
-
-### Color Support Issues
+### Terminal Information
 
 ```javascript
 // Check color support
-console.log('Color support:', termstyle.supports.level);
-console.log('True color:', termstyle.supports.trueColor);
+console.log('Color support:', termstyle.supportsColor);
+console.log('Color level:', termstyle.level); // 0, 1, 2, or 3
 
-// Force color mode if needed
-termstyle.configure({ colorMode: 'force' });
+// Get detailed terminal info
+const info = termstyle.getTerminalInfo();
+console.log(info);
+// {
+//   supportsColor: true,
+//   colorLevel: 3,
+//   isTTY: true,
+//   isCI: false,
+//   width: 120,
+//   height: 30,
+//   columns: 120,
+//   rows: 30
+// }
 
-// Disable colors for piping
-if (!process.stdout.isTTY) {
-  termstyle.configure({ colorMode: 'disable' });
-}
-```
-
-### Environment Detection
-
-```javascript
-// Debug environment information
-console.log('Environment info:', termstyle.env);
-
-// Platform-specific handling
-if (termstyle.env.platform === 'win32') {
-  // Windows-specific code
-} else {
-  // Unix-like systems
-}
-
-// Terminal-specific features
-if (termstyle.env.terminal.includes('iTerm')) {
-  // iTerm2-specific features
-}
-```
-
-### Performance Debugging
-
-```javascript
-// Enable performance profiling
-termstyle.configure({
-  performance: {
-    enableProfiling: true
-  }
-});
-
-// Measure performance
-console.time('styling');
-for (let i = 0; i < 1000; i++) {
-  termstyle.gradient(['red', 'blue'], 'Gradient text');
-}
-console.timeEnd('styling');
-```
-
-### Common Patterns
-
-```javascript
-// Pattern: Conditional styling based on environment
-const isDevelopment = process.env.NODE_ENV === 'development';
-const logStyle = isDevelopment ? termstyle.dim : termstyle.white;
-
-// Pattern: Graceful degradation
-function safeStyle(style, text) {
-  try {
-    return style(text);
-  } catch (error) {
-    return text; // Fallback to plain text
-  }
-}
-
-// Pattern: Style composition
-const compose = (...styles) => (text) => {
-  return styles.reduce((result, style) => style(result), text);
-};
-
-const errorHighlight = compose(
-  termstyle.red,
-  termstyle.bold,
-  termstyle.underline
-);
-
-console.log(errorHighlight('Critical Error'));
+// Strip ANSI codes when needed
+const styled = termstyle.red.bold('Styled text');
+const plain = termstyle.strip(styled);
+console.log(plain); // 'Styled text' (no ANSI codes)
 ```
 
 ---

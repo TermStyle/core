@@ -5,13 +5,23 @@ Complete API documentation for @termstyle/core.
 ## Table of Contents
 
 - [Installation](#installation)
-- [Basic Usage](#basic-usage)
-- [Color Methods](#color-methods)
-- [Style Methods](#style-methods)
-- [Advanced Features](#advanced-features)
-- [Utility Methods](#utility-methods)
-- [Configuration](#configuration)
-- [Types](#types)
+- [Core API](#core-api)
+  - [Basic Colors](#basic-colors)
+  - [Background Colors](#background-colors)
+  - [Text Styles](#text-styles)
+  - [Advanced Colors](#advanced-colors)
+- [Effects](#effects)
+  - [Gradient](#gradient)
+  - [Rainbow](#rainbow)
+  - [Box](#box)
+  - [Progress Bar](#progress-bar)
+  - [Spinner](#spinner)
+  - [Animation](#animation)
+- [Utilities](#utilities)
+- [Conditional Formatting](#conditional-formatting)
+- [Templates](#templates)
+- [Themes](#themes)
+- [Method Chaining](#method-chaining)
 
 ## Installation
 
@@ -19,602 +29,707 @@ Complete API documentation for @termstyle/core.
 npm install @termstyle/core
 ```
 
-## Basic Usage
+## Core API
 
-```typescript
+### Import
+
+```javascript
+// CommonJS
+const termstyle = require('@termstyle/core').default;
+
+// ES Modules
 import termstyle from '@termstyle/core';
-
-// Default import provides the main formatter
-const styled = termstyle.red('Hello World');
-console.log(styled);
 ```
-
-## Color Methods
 
 ### Basic Colors
 
-#### Foreground Colors
+#### `termstyle.red(text)`
+Apply red color to text.
 
-| Method | Description | Example |
-|--------|-------------|---------|
-| `black(text)` | Apply black color | `termstyle.black('text')` |
-| `red(text)` | Apply red color | `termstyle.red('text')` |
-| `green(text)` | Apply green color | `termstyle.green('text')` |
-| `yellow(text)` | Apply yellow color | `termstyle.yellow('text')` |
-| `blue(text)` | Apply blue color | `termstyle.blue('text')` |
-| `magenta(text)` | Apply magenta color | `termstyle.magenta('text')` |
-| `cyan(text)` | Apply cyan color | `termstyle.cyan('text')` |
-| `white(text)` | Apply white color | `termstyle.white('text')` |
-| `gray(text)` | Apply gray color | `termstyle.gray('text')` |
-| `grey(text)` | Apply grey color (alias) | `termstyle.grey('text')` |
+```javascript
+termstyle.red('Error message')
+```
 
-#### Background Colors
+#### `termstyle.green(text)`
+Apply green color to text.
 
-| Method | Description | Example |
-|--------|-------------|---------|
-| `bgBlack(text)` | Apply black background | `termstyle.bgBlack('text')` |
-| `bgRed(text)` | Apply red background | `termstyle.bgRed('text')` |
-| `bgGreen(text)` | Apply green background | `termstyle.bgGreen('text')` |
-| `bgYellow(text)` | Apply yellow background | `termstyle.bgYellow('text')` |
-| `bgBlue(text)` | Apply blue background | `termstyle.bgBlue('text')` |
-| `bgMagenta(text)` | Apply magenta background | `termstyle.bgMagenta('text')` |
-| `bgCyan(text)` | Apply cyan background | `termstyle.bgCyan('text')` |
-| `bgWhite(text)` | Apply white background | `termstyle.bgWhite('text')` |
+```javascript
+termstyle.green('Success message')
+```
+
+#### `termstyle.blue(text)`
+Apply blue color to text.
+
+```javascript
+termstyle.blue('Info message')
+```
+
+#### `termstyle.yellow(text)`
+Apply yellow color to text.
+
+```javascript
+termstyle.yellow('Warning message')
+```
+
+#### `termstyle.magenta(text)`
+Apply magenta color to text.
+
+```javascript
+termstyle.magenta('Magenta text')
+```
+
+#### `termstyle.cyan(text)`
+Apply cyan color to text.
+
+```javascript
+termstyle.cyan('Cyan text')
+```
+
+#### `termstyle.white(text)`
+Apply white color to text.
+
+```javascript
+termstyle.white('White text')
+```
+
+#### `termstyle.black(text)`
+Apply black color to text.
+
+```javascript
+termstyle.black('Black text')
+```
+
+#### `termstyle.gray(text)` / `termstyle.grey(text)`
+Apply gray color to text.
+
+```javascript
+termstyle.gray('Gray text')
+termstyle.grey('Grey text') // Alias
+```
+
+### Background Colors
+
+#### `termstyle.bgRed(text)`
+Apply red background color.
+
+```javascript
+termstyle.bgRed('Text on red background')
+```
+
+#### `termstyle.bgGreen(text)`
+Apply green background color.
+
+```javascript
+termstyle.bgGreen('Text on green background')
+```
+
+#### `termstyle.bgBlue(text)`
+Apply blue background color.
+
+```javascript
+termstyle.bgBlue('Text on blue background')
+```
+
+#### `termstyle.bgYellow(text)`
+Apply yellow background color.
+
+```javascript
+termstyle.bgYellow('Text on yellow background')
+```
+
+#### `termstyle.bgMagenta(text)`
+Apply magenta background color.
+
+```javascript
+termstyle.bgMagenta('Text on magenta background')
+```
+
+#### `termstyle.bgCyan(text)`
+Apply cyan background color.
+
+```javascript
+termstyle.bgCyan('Text on cyan background')
+```
+
+#### `termstyle.bgWhite(text)`
+Apply white background color.
+
+```javascript
+termstyle.bgWhite('Text on white background')
+```
+
+#### `termstyle.bgBlack(text)`
+Apply black background color.
+
+```javascript
+termstyle.bgBlack('Text on black background')
+```
+
+#### `termstyle.bgGray(text)` / `termstyle.bgGrey(text)`
+Apply gray background color.
+
+```javascript
+termstyle.bgGray('Text on gray background')
+termstyle.bgGrey('Text on grey background') // Alias
+```
+
+### Text Styles
+
+#### `termstyle.bold(text)`
+Apply bold style to text.
+
+```javascript
+termstyle.bold('Bold text')
+```
+
+#### `termstyle.dim(text)`
+Apply dim style to text.
+
+```javascript
+termstyle.dim('Dimmed text')
+```
+
+#### `termstyle.italic(text)`
+Apply italic style to text.
+
+```javascript
+termstyle.italic('Italic text')
+```
+
+#### `termstyle.underline(text)`
+Apply underline style to text.
+
+```javascript
+termstyle.underline('Underlined text')
+```
+
+#### `termstyle.inverse(text)`
+Invert foreground and background colors.
+
+```javascript
+termstyle.inverse('Inverted text')
+```
+
+#### `termstyle.hidden(text)`
+Make text hidden (but still takes up space).
+
+```javascript
+termstyle.hidden('Hidden text')
+```
+
+#### `termstyle.strikethrough(text)`
+Apply strikethrough style to text.
+
+```javascript
+termstyle.strikethrough('Strikethrough text')
+```
 
 ### Advanced Colors
 
-#### RGB Colors
-
-```typescript
-termstyle.rgb(r: number, g: number, b: number): StyleFunction
-termstyle.bgRgb(r: number, g: number, b: number): StyleFunction
-```
+#### `termstyle.hex(hexColor)(text)`
+Apply color using hex code.
 
 **Parameters:**
-- `r` (number): Red component (0-255)
-- `g` (number): Green component (0-255)  
-- `b` (number): Blue component (0-255)
+- `hexColor` {string} - Hex color code (e.g., '#ff0000' or 'ff0000')
 
-**Example:**
-```typescript
-termstyle.rgb(255, 128, 0)('Orange text')
-termstyle.bgRgb(255, 0, 255)('Purple background')
+```javascript
+termstyle.hex('#ff6b35')('Orange text')
+termstyle.hex('4ecdc4')('Teal text')
 ```
 
-#### Hex Colors
-
-```typescript
-termstyle.hex(color: string): StyleFunction
-termstyle.bgHex(color: string): StyleFunction
-```
+#### `termstyle.bgHex(hexColor)(text)`
+Apply background color using hex code.
 
 **Parameters:**
-- `color` (string): Hex color code (e.g., '#ff0000', '#f00', 'ff0000')
+- `hexColor` {string} - Hex color code
 
-**Example:**
-```typescript
-termstyle.hex('#ff8000')('Orange text')
-termstyle.bgHex('#00ff00')('Green background')
+```javascript
+termstyle.bgHex('#4ecdc4')('Text on teal background')
 ```
 
-#### HSL Colors
-
-```typescript
-termstyle.hsl(h: number, s: number, l: number): StyleFunction
-termstyle.bgHsl(h: number, s: number, l: number): StyleFunction
-```
+#### `termstyle.rgb(r, g, b)(text)`
+Apply color using RGB values.
 
 **Parameters:**
-- `h` (number): Hue (0-360)
-- `s` (number): Saturation (0-100)
-- `l` (number): Lightness (0-100)
+- `r` {number} - Red value (0-255)
+- `g` {number} - Green value (0-255)
+- `b` {number} - Blue value (0-255)
 
-**Example:**
-```typescript
-termstyle.hsl(120, 100, 50)('Pure green')
-termstyle.bgHsl(240, 100, 50)('Blue background')
+```javascript
+termstyle.rgb(255, 107, 53)('RGB orange text')
 ```
 
-## Style Methods
-
-| Method | Description | ANSI Code | Example |
-|--------|-------------|-----------|---------|
-| `bold(text)` | Bold text | `1` | `termstyle.bold('text')` |
-| `dim(text)` | Dimmed text | `2` | `termstyle.dim('text')` |
-| `italic(text)` | Italic text | `3` | `termstyle.italic('text')` |
-| `underline(text)` | Underlined text | `4` | `termstyle.underline('text')` |
-| `blink(text)` | Blinking text | `5` | `termstyle.blink('text')` |
-| `inverse(text)` | Inverted colors | `7` | `termstyle.inverse('text')` |
-| `hidden(text)` | Hidden text | `8` | `termstyle.hidden('text')` |
-| `strikethrough(text)` | Strikethrough text | `9` | `termstyle.strikethrough('text')` |
-
-## Advanced Features
-
-### Gradients
-
-#### Linear Gradients
-
-```typescript
-termstyle.gradient(colors: string[], text?: string): StyleFunction | string
-```
+#### `termstyle.bgRgb(r, g, b)(text)`
+Apply background color using RGB values.
 
 **Parameters:**
-- `colors` (string[]): Array of color values (hex, rgb, color names)
-- `text` (string, optional): Text to apply gradient to
+- `r` {number} - Red value (0-255)
+- `g` {number} - Green value (0-255)
+- `b` {number} - Blue value (0-255)
 
-**Example:**
-```typescript
-// Function form
-const gradientFn = termstyle.gradient(['#ff0000', '#00ff00', '#0000ff']);
-console.log(gradientFn('Rainbow text'));
-
-// Direct form
-console.log(termstyle.gradient(['red', 'yellow', 'green'], 'Gradient text'));
+```javascript
+termstyle.bgRgb(78, 205, 196)('Text on RGB teal background')
 ```
 
-#### RGB Gradients
-
-```typescript
-termstyle.gradientRgb(colors: RGB[], text?: string): StyleFunction | string
-```
+#### `termstyle.color(value)(text)`
+Apply color using various formats.
 
 **Parameters:**
-- `colors` (RGB[]): Array of RGB color arrays `[r, g, b]`
-- `text` (string, optional): Text to apply gradient to
+- `value` {string|number|Array} - Color value
+  - String: Color name or hex code
+  - Number: ANSI 256 color code (0-255)
+  - Array: RGB values [r, g, b]
 
-**Example:**
-```typescript
-termstyle.gradientRgb([[255,0,0], [0,255,0], [0,0,255]], 'RGB gradient');
+```javascript
+termstyle.color(196)('ANSI 256 red')
+termstyle.color([255, 0, 0])('RGB red')
+termstyle.color('red')('Named color')
 ```
 
-### Animations
+#### `termstyle.bgColor(value)(text)`
+Apply background color using various formats.
 
-#### Spinner
+**Parameters:**
+- `value` {string|number|Array} - Color value
 
-```typescript
-termstyle.spinner(type?: SpinnerType): Spinner
+```javascript
+termstyle.bgColor(46)('Text on ANSI 256 green')
+termstyle.bgColor([0, 255, 0])('Text on RGB green')
 ```
 
-**Spinner Types:**
-- `'dots'` (default)
-- `'line'`
-- `'arrow'`
-- `'bounce'`
-- `'clock'`
+## Effects
 
-**Example:**
-```typescript
-const spinner = termstyle.spinner('dots');
-spinner.start('Loading...');
-setTimeout(() => spinner.stop(), 3000);
+### Gradient
+
+#### `termstyle.gradient(text, colors, options?)`
+Apply gradient effect to text.
+
+**Parameters:**
+- `text` {string} - Text to apply gradient to
+- `colors` {Array} - Array of color names, hex codes, or RGB arrays
+- `options` {Object} - Optional gradient options
+  - `interpolation` {string} - 'linear' or 'bezier'
+  - `hsvSpin` {string} - 'short' or 'long'
+
+```javascript
+// Color names
+termstyle.gradient('Gradient text', ['red', 'yellow', 'green'])
+
+// Hex colors
+termstyle.gradient('Hex gradient', ['#ff0000', '#00ff00', '#0000ff'])
+
+// RGB arrays
+termstyle.gradient('RGB gradient', [[255,0,0], [0,255,0], [0,0,255]])
 ```
 
-**Spinner Methods:**
-- `start(text?: string): void` - Start the spinner
-- `stop(): void` - Stop the spinner
-- `succeed(text?: string): void` - Stop with success symbol
-- `fail(text?: string): void` - Stop with error symbol
-- `warn(text?: string): void` - Stop with warning symbol
-- `info(text?: string): void` - Stop with info symbol
+### Rainbow
 
-#### Typewriter Effect
+#### `termstyle.rainbow(text)`
+Apply rainbow gradient to text.
 
-```typescript
-termstyle.typewriter(text: string, options?: TypewriterOptions): Promise<void>
+**Parameters:**
+- `text` {string} - Text to apply rainbow effect to
+
+```javascript
+termstyle.rainbow('Rainbow colored text')
 ```
 
-**Options:**
-```typescript
-interface TypewriterOptions {
-  speed?: number; // Typing speed in ms (default: 50)
-  cursor?: string; // Cursor character (default: '|')
-  cursorBlink?: boolean; // Whether cursor blinks (default: true)
-}
-```
+### Box
 
-**Example:**
-```typescript
-await termstyle.typewriter('Hello World!', { speed: 100 });
-```
+#### `termstyle.box(text, options)`
+Draw a box around text.
 
-### Progress Bars
+**Parameters:**
+- `text` {string} - Text to put in box
+- `options` {Object} - Box options
+  - `padding` {number|Object} - Padding inside box
+  - `margin` {number|Object} - Margin outside box
+  - `borderStyle` {string} - Border style: 'single', 'double', 'round', 'bold', 'ascii'
+  - `borderColor` {string} - Color of border
+  - `backgroundColor` {string} - Background color inside box
+  - `align` {string} - Text alignment: 'left', 'center', 'right'
+  - `title` {string} - Title for the box
+  - `titleAlignment` {string} - Title alignment: 'left', 'center', 'right'
+  - `width` {number} - Fixed width for box
 
-```typescript
-termstyle.progressBar(options?: ProgressBarOptions): ProgressBar
-```
+```javascript
+// Simple box
+termstyle.box('Hello World')
+// ┌───────────┐
+// │Hello World│
+// └───────────┘
 
-**Options:**
-```typescript
-interface ProgressBarOptions {
-  width?: number; // Bar width in characters (default: 40)
-  complete?: string; // Complete character (default: '█')
-  incomplete?: string; // Incomplete character (default: '░')
-  format?: string; // Format string (default: ':bar :percent')
-  clear?: boolean; // Clear bar on completion (default: false)
-}
-```
-
-**Progress Bar Methods:**
-- `update(percent: number): void` - Update progress (0-100)
-- `tick(amount?: number): void` - Increment progress
-- `complete(): void` - Mark as complete
-- `clear(): void` - Clear the progress bar
-
-**Example:**
-```typescript
-const progress = termstyle.progressBar({ width: 50 });
-for (let i = 0; i <= 100; i += 10) {
-  progress.update(i);
-  await new Promise(resolve => setTimeout(resolve, 100));
-}
-```
-
-### Box Drawing
-
-```typescript
-termstyle.box(content: string, options?: BoxOptions): string
-```
-
-**Options:**
-```typescript
-interface BoxOptions {
-  padding?: number | [number, number] | [number, number, number, number];
-  margin?: number | [number, number] | [number, number, number, number];
-  borderStyle?: 'single' | 'double' | 'round' | 'bold' | 'singleDouble' | 'doubleSingle';
-  borderColor?: string;
-  backgroundColor?: string;
-  title?: string;
-  titleAlignment?: 'left' | 'center' | 'right';
-  width?: number;
-  height?: number;
-  textAlignment?: 'left' | 'center' | 'right';
-}
-```
-
-**Example:**
-```typescript
-console.log(termstyle.box('Hello World!', {
+// Customized box
+termstyle.box('Important Message', {
   padding: 1,
+  margin: 1,
   borderStyle: 'double',
   borderColor: 'blue',
-  title: 'Greeting'
-}));
+  align: 'center',
+  title: 'Notice'
+})
 ```
 
-### Template Literals
+### Progress Bar
 
-```typescript
-// Tagged template literal
-termstyle`Template string with ${styled} content`
+#### `termstyle.progressBar(options)`
+Create a progress bar instance.
+
+**Parameters:**
+- `options` {Object} - Progress bar options
+  - `total` {number} - Total value for 100% (default: 100)
+  - `width` {number} - Width of progress bar (default: 40)
+  - `complete` {string} - Character for completed portion (default: '█')
+  - `incomplete` {string} - Character for incomplete portion (default: '░')
+  - `clear` {boolean} - Clear bar on completion
+  - `format` {string} - Format string (default: ':bar :percent :etas')
+
+**Returns:** ProgressBar instance
+
+**Methods:**
+- `update(value)` - Update progress to specific value
+- `tick(delta)` - Increment progress by delta
+- `render()` - Get current bar string
+- `complete()` - Mark as complete
+
+```javascript
+const progressBar = termstyle.progressBar({
+  total: 100,
+  width: 40,
+  complete: '█',
+  incomplete: '░'
+});
+
+progressBar.update(50);
+console.log(progressBar.render());
+// ████████████████████░░░░░░░░░░░░░░░░░░░░ 50%
 ```
 
-**Example:**
-```typescript
+#### `termstyle.bar(current, total, options)`
+Create a simple progress bar string.
+
+**Parameters:**
+- `current` {number} - Current value
+- `total` {number} - Total value
+- `options` {Object} - Bar options
+
+```javascript
+console.log(termstyle.bar(50, 100, { width: 20 }));
+// ██████████░░░░░░░░░░
+```
+
+### Spinner
+
+#### `termstyle.spinner(textOrOptions)`
+Create a spinner instance.
+
+**Parameters:**
+- `textOrOptions` {string|Object} - Spinner text or options
+  - `text` {string} - Text to show with spinner
+  - `spinner` {string} - Spinner type (default: 'dots')
+
+**Returns:** Spinner instance
+
+**Methods:**
+- `start()` - Start the spinner
+- `stop(text)` - Stop with optional text
+- `succeed(text)` - Stop with success symbol
+- `fail(text)` - Stop with failure symbol
+- `warn(text)` - Stop with warning symbol
+- `info(text)` - Stop with info symbol
+- `update(text)` - Update spinner text
+- `clear()` - Clear the spinner
+
+**Available Spinners:**
+- `dots`, `dots2`, `dots3`, `line`, `line2`, `pipe`, `star`
+- `toggle`, `box`, `circle`, `arrow`, `bounce`, `bar`
+- `earth`, `moon`, `clock`, `balloon`, `noise`, `boxBounce`
+- `triangle`, `binary`, `runner`, `pong`, `shark`, `dqpb`
+- `weather`, `christmas`
+
+```javascript
+// Simple spinner
+const spinner = termstyle.spinner('Loading...');
+spinner.start();
+
+setTimeout(() => {
+  spinner.succeed('Complete!');
+}, 3000);
+
+// Custom spinner
+const customSpinner = termstyle.spinner({
+  text: 'Processing',
+  spinner: 'dots2'
+});
+```
+
+### Animation
+
+#### `termstyle.animate(text, type, options)`
+Create animated text.
+
+**Parameters:**
+- `text` {string} - Text to animate
+- `type` {string} - Animation type
+- `options` {Object} - Animation options
+  - `duration` {number} - Animation duration in ms
+  - `interval` {number} - Frame interval in ms
+  - `iterations` {number} - Number of iterations
+
+**Returns:** Animation instance with methods:
+- `start()` - Start animation
+- `stop()` - Stop animation
+- `pause()` - Pause animation
+- `resume()` - Resume animation
+
+```javascript
+const anim = termstyle.animate('Hello!', 'pulse', {
+  duration: 2000,
+  interval: 100
+});
+anim.start();
+```
+
+## Utilities
+
+#### `termstyle.strip(text)` / `termstyle.stripAnsi(text)`
+Remove all ANSI escape codes from text.
+
+**Parameters:**
+- `text` {string} - Text with ANSI codes
+
+**Returns:** {string} Plain text
+
+```javascript
+const styled = termstyle.red.bold('Styled text');
+const plain = termstyle.strip(styled);
+console.log(plain); // 'Styled text'
+```
+
+#### `termstyle.supportsColor`
+Check if terminal supports color.
+
+**Returns:** {boolean}
+
+```javascript
+if (termstyle.supportsColor) {
+  console.log(termstyle.green('Color supported!'));
+}
+```
+
+#### `termstyle.level`
+Get color support level.
+
+**Returns:** {number} 
+- 0 = No color support
+- 1 = Basic 16 colors
+- 2 = 256 colors
+- 3 = True color (16.7m colors)
+
+```javascript
+console.log(`Color level: ${termstyle.level}`);
+```
+
+#### `termstyle.getTerminalInfo()`
+Get terminal information.
+
+**Returns:** {Object}
+- `supportsColor` {boolean}
+- `colorLevel` {number}
+- `isTTY` {boolean}
+- `isCI` {boolean}
+- `width` {number}
+- `height` {number}
+- `columns` {number}
+- `rows` {number}
+
+```javascript
+const info = termstyle.getTerminalInfo();
+console.log(info);
+```
+
+#### `termstyle.create(options)`
+Create a new formatter instance.
+
+**Parameters:**
+- `options` {Object}
+  - `force` {boolean} - Force color output
+  - `level` {number} - Force color level
+
+```javascript
+const myStyle = termstyle.create({ force: true });
+console.log(myStyle.red('Forced red'));
+```
+
+## Conditional Formatting
+
+#### `termstyle.conditional(condition)`
+Apply styles conditionally.
+
+**Parameters:**
+- `condition` {boolean} - Whether to apply styles
+
+**Returns:** Conditional formatter
+
+```javascript
+const isError = true;
+console.log(
+  termstyle.conditional(isError).red('Error!')
+);
+
+// Chain with other methods
+const debugInfo = termstyle.conditional(process.env.DEBUG).gray('Debug info');
+console.log(debugInfo);
+```
+
+#### `termstyle.createLogFormatter(options)`
+Create a log formatter with levels.
+
+**Parameters:**
+- `options` {Object}
+  - `minLevel` {string} - Minimum level (default: 'info')
+  - `timestamp` {boolean} - Include timestamps
+  - `usePrefix` {boolean} - Include prefixes
+
+**Returns:** LogFormatter instance
+
+```javascript
+const logger = termstyle.createLogFormatter({
+  timestamp: true,
+  usePrefix: true
+});
+
+console.log(logger.info('Server started'));
+console.log(logger.warn('Low memory'));
+console.log(logger.error('Connection failed'));
+console.log(logger.debug('Debug info'));
+```
+
+#### `termstyle.createStatusFormatter()`
+Create status formatters with icons.
+
+**Returns:** Status formatter object
+
+```javascript
+const status = termstyle.createStatusFormatter();
+
+console.log(status.success('Tests passed'));
+console.log(status.error('Build failed'));
+console.log(status.warning('Deprecated'));
+console.log(status.info('Version 1.0.0'));
+```
+
+## Templates
+
+#### `termstyle.template`
+Template literal tag function.
+
+```javascript
 const name = 'World';
-const greeting = termstyle`Hello ${termstyle.blue.bold(name)}!`;
-console.log(greeting);
+console.log(termstyle.template`Hello ${name}!`);
 ```
 
-### Conditional Formatting
-
-```typescript
-termstyle.conditional<T>(
-  value: T,
-  conditions: Record<string, StyleFunction>,
-  defaultStyle?: StyleFunction
-): StyleFunction
+#### Template with styled values
+```javascript
+const user = 'John';
+const score = 95;
+console.log(
+  termstyle.template`User ${termstyle.green(user)} scored ${
+    termstyle.yellow.bold(`${score}%`)
+  }!`
+);
 ```
 
-**Example:**
-```typescript
-const status = 'error';
-const styled = termstyle.conditional(status, {
-  error: termstyle.red.bold,
-  warning: termstyle.yellow,
-  success: termstyle.green,
-  info: termstyle.blue
-}, termstyle.gray);
+## Themes
 
-console.log(styled('Status message'));
-```
+#### `termstyle.ThemeManager`
+Create a theme manager.
 
-## Utility Methods
+```javascript
+const manager = new termstyle.ThemeManager();
 
-### Strip ANSI Codes
+// Set theme
+manager.setTheme('dark');
 
-```typescript
-termstyle.strip(text: string): string
-```
-
-Remove all ANSI escape codes from a string.
-
-**Example:**
-```typescript
-const styled = termstyle.red('Hello');
-const plain = termstyle.strip(styled); // 'Hello'
-```
-
-### Text Length
-
-```typescript
-termstyle.length(text: string): number
-```
-
-Get the actual text length excluding ANSI codes.
-
-**Example:**
-```typescript
-const styled = termstyle.red.bold('Hello');
-const length = termstyle.length(styled); // 5
-```
-
-### Color Support Detection
-
-```typescript
-termstyle.supports: {
-  color: boolean;
-  trueColor: boolean;
-  level: 0 | 1 | 2 | 3;
-}
-```
-
-**Levels:**
-- `0`: No color support
-- `1`: Basic 16 colors
-- `2`: 256 colors
-- `3`: True color (16 million)
-
-**Example:**
-```typescript
-if (termstyle.supports.trueColor) {
-  // Use RGB/hex colors
-} else if (termstyle.supports.color) {
-  // Use basic colors
-}
-```
-
-### Environment Detection
-
-```typescript
-termstyle.env: {
-  isTTY: boolean;
-  platform: string;
-  terminal: string;
-  columns: number;
-  rows: number;
-}
-```
-
-## Configuration
-
-### Global Configuration
-
-```typescript
-termstyle.configure(options: ConfigOptions): void
-```
-
-**Options:**
-```typescript
-interface ConfigOptions {
-  level?: 0 | 1 | 2 | 3; // Force color support level
-  colorMode?: 'auto' | 'force' | 'disable'; // Color mode
-  theme?: string; // Default theme
-  cache?: boolean; // Enable/disable caching
-  performance?: {
-    enableCaching?: boolean;
-    cacheSize?: number;
-    enableProfiling?: boolean;
-  };
-}
-```
-
-**Example:**
-```typescript
-termstyle.configure({
-  level: 3,
-  colorMode: 'auto',
-  cache: true,
-  performance: {
-    enableCaching: true,
-    cacheSize: 1000
+// Register custom theme
+manager.registerTheme('custom', {
+  colors: {
+    primary: '#007acc',
+    success: '#4caf50',
+    error: '#f44336'
   }
 });
+
+// Apply theme
+const themed = manager.applyTheme();
+console.log(themed.primary('Primary text'));
 ```
 
-### Theme Management
+#### Built-in themes
+- `default` - Default theme
+- `dark` - Dark theme
+- `ocean` - Ocean colors
+- `forest` - Forest colors
 
-#### Apply Theme
-
-```typescript
-termstyle.theme(name: string): void
+```javascript
+const themes = termstyle.themes;
+// Access predefined themes
 ```
 
-**Built-in Themes:**
-- `'default'`
-- `'dark'`
-- `'light'`
-- `'cyberpunk'`
-- `'pastel'`
-- `'high-contrast'`
+## Method Chaining
 
-#### Create Custom Theme
+All color and style methods can be chained:
 
-```typescript
-termstyle.createTheme(name: string, theme: ThemeDefinition): void
-```
+```javascript
+// Chain styles
+termstyle.red.bold('Bold red')
+termstyle.blue.underline.italic('Blue underlined italic')
 
-**Theme Definition:**
-```typescript
-interface ThemeDefinition {
-  primary?: string;
-  secondary?: string;
-  success?: string;
-  warning?: string;
-  error?: string;
-  info?: string;
-  muted?: string;
-  accent?: string;
-}
-```
+// Chain colors and backgrounds
+termstyle.white.bgRed.bold('Alert!')
 
-**Example:**
-```typescript
-termstyle.createTheme('myTheme', {
-  primary: '#3498db',
-  secondary: '#2ecc71',
-  error: '#e74c3c',
-  warning: '#f39c12',
-  success: '#27ae60',
-  info: '#34495e'
-});
+// Chain with advanced colors
+termstyle.hex('#ff6b35').bgHex('#4ecdc4').bold('Styled')
 
-termstyle.theme('myTheme');
-```
-
-## Types
-
-### Core Types
-
-```typescript
-// Style function that can be called with text
-type StyleFunction = (text: string) => string;
-
-// RGB color array
-type RGB = [number, number, number];
-
-// HSL color object
-interface HSL {
-  h: number; // Hue (0-360)
-  s: number; // Saturation (0-100)
-  l: number; // Lightness (0-100)
-}
-
-// Color value union
-type ColorValue = string | number | RGB | HSL;
-
-// Style object with chaining capabilities
-interface Style {
-  // Style properties
-  (...args: any[]): string;
-  
-  // Color methods
-  black: Style;
-  red: Style;
-  green: Style;
-  // ... other colors
-  
-  // Style methods  
-  bold: Style;
-  italic: Style;
-  underline: Style;
-  // ... other styles
-  
-  // Advanced methods
-  rgb(r: number, g: number, b: number): Style;
-  hex(color: string): Style;
-  hsl(h: number, s: number, l: number): Style;
-}
-```
-
-### Animation Types
-
-```typescript
-type SpinnerType = 'dots' | 'line' | 'arrow' | 'bounce' | 'clock';
-
-interface Spinner {
-  start(text?: string): void;
-  stop(): void;
-  succeed(text?: string): void;
-  fail(text?: string): void;
-  warn(text?: string): void;
-  info(text?: string): void;
-}
-
-interface TypewriterOptions {
-  speed?: number;
-  cursor?: string;
-  cursorBlink?: boolean;
-}
-```
-
-### Layout Types
-
-```typescript
-type BorderStyle = 'single' | 'double' | 'round' | 'bold' | 'singleDouble' | 'doubleSingle';
-
-type Alignment = 'left' | 'center' | 'right';
-
-type Padding = number | [number, number] | [number, number, number, number];
-
-interface BoxOptions {
-  padding?: Padding;
-  margin?: Padding;
-  borderStyle?: BorderStyle;
-  borderColor?: string;
-  backgroundColor?: string;
-  title?: string;
-  titleAlignment?: Alignment;
-  width?: number;
-  height?: number;
-  textAlignment?: Alignment;
-}
-
-interface ProgressBarOptions {
-  width?: number;
-  complete?: string;
-  incomplete?: string;
-  format?: string;
-  clear?: boolean;
-}
-
-interface ProgressBar {
-  update(percent: number): void;
-  tick(amount?: number): void;
-  complete(): void;
-  clear(): void;
-}
+// Complex chains
+termstyle
+  .red
+  .bgYellow
+  .bold
+  .underline
+  .italic('Complex styling')
 ```
 
 ## Error Handling
 
-The library throws specific errors for different scenarios:
+All methods handle invalid inputs gracefully:
 
-```typescript
-// Invalid color values
-try {
-  termstyle.rgb(300, 0, 0)('text'); // Throws RangeError
-} catch (error) {
-  console.error('Invalid RGB values');
-}
+```javascript
+// Invalid inputs return original text or empty string
+termstyle.hex('invalid')('text') // Returns: 'text'
+termstyle.rgb(-10, 300, 128)('text') // Clamps values
+termstyle.red(null) // Returns styled 'null'
+termstyle.red(undefined) // Returns styled 'undefined'
+```
 
-// Invalid hex colors
-try {
-  termstyle.hex('invalid')('text'); // Throws TypeError
-} catch (error) {
-  console.error('Invalid hex color');
+## Performance Tips
+
+1. **Reuse formatters for better performance:**
+```javascript
+const error = termstyle.red.bold;
+for (let i = 0; i < 1000; i++) {
+  console.log(error(`Error ${i}`));
 }
 ```
 
-## Performance Considerations
-
-- **Caching**: Enable caching for repeated style operations
-- **Memory**: Use memory pooling for high-frequency operations
-- **Bundle Size**: Import only needed features when possible
-- **Terminal Detection**: Results are cached automatically
-
-## Browser Compatibility
-
-While primarily designed for Node.js terminals, basic functionality works in browsers:
-
-```typescript
-// Browser detection
-if (typeof window !== 'undefined') {
-  // Browser environment - limited color support
-} else {
-  // Node.js environment - full feature support
-}
+2. **Use conditional formatting:**
+```javascript
+const debug = termstyle.conditional(process.env.DEBUG).gray;
+debug('Debug message'); // Only styled if DEBUG is true
 ```
 
----
-
-For more examples and advanced usage patterns, see [EXAMPLES.md](./EXAMPLES.md).
+3. **Strip ANSI for length calculations:**
+```javascript
+const styled = termstyle.red.bold('Hello');
+const length = termstyle.strip(styled).length; // 5
+```
