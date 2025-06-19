@@ -89,8 +89,8 @@ export class ConditionalFormatter {
 export function conditional(): ConditionalFormatter;
 export function conditional(condition: any, options?: ConditionalOptions): any;
 export function conditional(condition?: any, options?: ConditionalOptions): any & { when: (...args: any[]) => any } {
-  // If no condition provided, return a new ConditionalFormatter for chaining
-  if (condition === undefined) {
+  // If no arguments provided, return a new ConditionalFormatter for chaining
+  if (arguments.length === 0) {
     return new ConditionalFormatter(options);
   }
   

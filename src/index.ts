@@ -111,6 +111,7 @@ const termstyle: FormatterAPI & {
   ProgressBar,
   multiProgress,
   MultiProgress,
+  bar,
   
   template: createTemplateTag(),
   createTemplate: createTemplateTag,

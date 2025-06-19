@@ -136,7 +136,7 @@ function gradientBase(
   if (validColors.length === 1) {
     const color = validColors[0];
     const rgb = convertColorInput(color);
-    return new Style([], [], { force: true }).color(rgb).apply(text);
+    return new Style([], [], {}).color(rgb).apply(text);
   }
 
   const chars = [...text];
@@ -172,7 +172,7 @@ function gradientBase(
       ];
     }
     
-    result += new Style([], [], { force: true }).color(color).apply(char);
+    result += new Style([], [], {}).color(color).apply(char);
   });
   
   return result;
@@ -190,13 +190,28 @@ export function gradient(
 // Add linear method for backward compatibility
 export interface GradientAPI {
   (text: string, colors: (string | [number, number, number])[], options?: GradientOptions): string;
+  (colors: (string | [number, number, number])[]): (text: string, options?: GradientOptions) => string;
   linear: (text: string, options: { from: string | [number, number, number]; to: string | [number, number, number] }) => string;
 }
 
 // Create gradient object with linear method for the main index
 const gradientWithLinear = Object.assign(
-  (text: string, colors: (string | [number, number, number])[], options?: GradientOptions) => {
-    return gradientBase(text, colors, options);
+  function gradient(...args: any[]) {
+    // Support both gradient(text, colors) and gradient(colors)(text)
+    if (args.length === 1 && Array.isArray(args[0])) {
+      // Curried form: gradient(colors) returns a function
+      const colors = args[0] as (string | [number, number, number])[];
+      return (text: string, options?: GradientOptions) => gradientBase(text, colors, options);
+    } else if (args.length >= 2) {
+      // Direct form: gradient(text, colors, options?)
+      const [text, colors, options] = args;
+      return gradientBase(text, colors, options);
+    } else if (args.length === 1 && typeof args[0] === 'string') {
+      // Edge case: gradient(text) with no colors
+      return args[0];
+    }
+    // Default case
+    return '';
   },
   {
     linear: (text: string, options: { from: string | [number, number, number]; to: string | [number, number, number] }) => {
@@ -220,7 +235,8 @@ export default {
   rainbow
 };
 
-export function rainbow(text: string, options: GradientOptions = {}): string {
+// Rainbow function with optional currying support
+export function rainbow(...args: any[]): string | ((text: string) => string) {
   const colors = [
     '#e81416',
     '#ffa500',
@@ -231,5 +247,15 @@ export function rainbow(text: string, options: GradientOptions = {}): string {
     '#70369d'
   ];
   
-  return gradientBase(text, colors, options);
+  if (args.length === 0) {
+    // Curried form: rainbow() returns a function
+    return (text: string, options: GradientOptions = {}) => gradientBase(text, colors, options);
+  } else if (args.length >= 1 && typeof args[0] === 'string') {
+    // Direct form: rainbow(text, options?)
+    const [text, options = {}] = args;
+    return gradientBase(text, colors, options);
+  }
+  
+  // Default case
+  return '';
 }

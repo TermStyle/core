@@ -45,7 +45,7 @@ export class ProgressBar {
   }
 
   update(current: number, tokens?: Record<string, string>): void {
-    this.current = Math.min(current, this.options.total);
+    this.current = Math.max(0, Math.min(current, this.options.total));
     this.render(tokens);
   }
 
@@ -56,9 +56,9 @@ export class ProgressBar {
     }
     this.lastRender = now;
 
-    const percent = this.current / this.options.total;
-    const filledLength = Math.floor(this.options.width * percent);
-    const emptyLength = this.options.width - filledLength;
+    const percent = this.options.total > 0 ? this.current / this.options.total : 0;
+    const filledLength = Math.max(0, Math.floor(this.options.width * percent));
+    const emptyLength = Math.max(0, this.options.width - filledLength);
 
     let filled = this.options.complete.repeat(filledLength);
     const empty = this.options.incomplete.repeat(emptyLength);
@@ -139,10 +139,10 @@ export function bar(current: number, total: number, options?: ProgressBarOptions
   const barOptions = { ...options, total };
   
   // Create the bar string
-  const percent = current / total;
+  const percent = total > 0 ? current / total : 0;
   const width = barOptions.width || 40;
-  const filledLength = Math.floor(width * percent);
-  const emptyLength = width - filledLength;
+  const filledLength = Math.max(0, Math.min(width, Math.floor(width * percent)));
+  const emptyLength = Math.max(0, width - filledLength);
   
   const complete = barOptions.complete || '█';
   const incomplete = barOptions.incomplete || '░';

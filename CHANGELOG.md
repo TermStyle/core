@@ -46,6 +46,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automated building and publishing
 - Jest testing framework with custom matchers
 
+## [1.0.5] - 2025-06-19
+
+### Changed
+- Improved build output with minified distribution files
+- Enhanced TypeScript type definitions
+- Optimized bundle size for better performance
+
+### Fixed
+- Fixed gradient effect parameter handling
+- Improved error handling for invalid color inputs
+- Enhanced terminal detection reliability
+
+### Development
+- Comprehensive verification test suite added and validated
+- 100% method coverage confirmed with 708 passing tests
+- Performance benchmarks established
+
 ## [Unreleased]
 
 ### Planned Features

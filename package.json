@@ -1,6 +1,6 @@
 {
   "name": "@termstyle/core",
-  "version": "1.0.1",
+  "version": "1.0.5",
   "description": "A powerful, feature-rich CLI text formatting library with zero dependencies. Supports colors, gradients, animations, progress bars, and more.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
