@@ -38,13 +38,14 @@ export class Formatter {
         }
         
         if (prop in style) {
-          const newStyle = (style as any)[prop];
+          const styleObj = style as Style & Record<string, unknown>;
+          const newStyle = styleObj[prop];
           if (newStyle instanceof Style) {
             return this.createProxy(newStyle);
           }
           if (typeof newStyle === 'function') {
-            return (...args: any[]) => {
-              const result = newStyle.apply(style, args);
+            return (...args: unknown[]) => {
+              const result = (newStyle as (...args: unknown[]) => unknown).apply(style, args);
               if (result instanceof Style) {
                 return this.createProxy(result);
               }

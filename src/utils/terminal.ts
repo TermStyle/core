@@ -94,21 +94,31 @@ export const getTerminalInfo = (): TerminalInfo => {
 };
 
 let terminalInfo: TerminalInfo | null = null;
+let terminalInfoTimestamp = 0;
 let resizeListener: (() => void) | null = null;
 
+// Cache TTL in milliseconds (5 minutes)
+const TERMINAL_INFO_TTL = 5 * 60 * 1000;
+
 export const terminal = (): TerminalInfo => {
-  if (!terminalInfo) {
+  const now = Date.now();
+  
+  // Check if cache is expired or doesn't exist
+  if (!terminalInfo || (now - terminalInfoTimestamp) > TERMINAL_INFO_TTL) {
     terminalInfo = getTerminalInfo();
+    terminalInfoTimestamp = now;
   }
+  
   return terminalInfo;
 };
 
 export const updateTerminalInfo = (): void => {
   terminalInfo = getTerminalInfo();
+  terminalInfoTimestamp = Date.now();
 };
 
 export const cleanup = (): void => {
-  if (resizeListener && process.stdout && typeof process.stdout.removeListener === 'function') {
+  if (resizeListener && typeof process !== 'undefined' && process.stdout && typeof process.stdout.removeListener === 'function') {
     try {
       process.stdout.removeListener('resize', resizeListener);
       resizeListener = null;
@@ -119,11 +129,11 @@ export const cleanup = (): void => {
   terminalInfo = null;
 };
 
-// Safe event listener registration
+// Safe event listener registration - prevent duplicate listeners
 if (typeof process !== 'undefined' && process.stdout && typeof process.stdout.on === 'function') {
   try {
-    const hasResizeListener = process.stdout.listenerCount && process.stdout.listenerCount('resize') > 0;
-    if (!hasResizeListener) {
+    // Only register if we haven't already
+    if (!resizeListener) {
       resizeListener = updateTerminalInfo;
       process.stdout.on('resize', resizeListener);
     }

@@ -44,6 +44,7 @@ import {
   color as conditionalColor
 } from './conditional';
 import { stripAnsi } from './core/ansi';
+import { cacheManager } from './core/cache-manager';
 
 const formatter = Formatter.create() as FormatterAPI;
 
@@ -183,7 +184,8 @@ export {
   conditionalColor,
   terminal,
   getTerminalInfo,
-  stripAnsi
+  stripAnsi,
+  cacheManager
 };
 
 // Export types separately

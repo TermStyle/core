@@ -1,5 +1,10 @@
-import { hideCursor, showCursor, cursorPosition, eraseLine } from '../core/ansi';
+import { eraseLine } from '../core/ansi';
 import { Style } from '../styles/style';
+import { ResourceManager, Disposable } from '../core/resource-manager';
+import { cursorManager } from '../core/cursor-manager';
+import { safeExecute } from '../core/safe-utils';
+import { InputValidator } from '../core/validators';
+import { AnimationError, ErrorCode } from '../core/errors';
 
 export type AnimationType = 'blink' | 'pulse' | 'slide' | 'typewriter' | 'fade';
 
@@ -10,54 +15,138 @@ export interface AnimationOptions {
   onComplete?: () => void;
 }
 
-export class Animation {
+export class Animation implements Disposable {
   private intervalId?: NodeJS.Timeout;
   private running = false;
+  private isDisposed = false;
+  private componentId: string;
+  private frameCount = 0;
+  private startTime = 0;
+  private pausedFrame = 0;
+  private pausedIteration = 0;
 
   constructor(
     private text: string,
     private type: AnimationType,
     private options: AnimationOptions = {}
   ) {
+    // Validate text input
+    const textValidation = InputValidator.validateText(text);
+    if (!textValidation.valid) {
+      throw new AnimationError(
+        textValidation.error!,
+        ErrorCode.INVALID_TEXT_INPUT,
+        { text }
+      );
+    }
+    this.text = textValidation.value!.text;
+    
+    // Validate animation options
+    if (options.duration !== undefined) {
+      const durationValidation = InputValidator.validatePositiveNumber(options.duration, 'duration');
+      if (!durationValidation.valid) {
+        throw new AnimationError(
+          durationValidation.error!,
+          ErrorCode.INVALID_NUMBER_INPUT,
+          { duration: options.duration }
+        );
+      }
+    }
+    
+    if (options.interval !== undefined) {
+      const intervalValidation = InputValidator.validatePositiveNumber(options.interval, 'interval');
+      if (!intervalValidation.valid) {
+        throw new AnimationError(
+          intervalValidation.error!,
+          ErrorCode.INVALID_NUMBER_INPUT,
+          { interval: options.interval }
+        );
+      }
+    }
+    
+    if (options.iterations !== undefined && options.iterations !== Infinity) {
+      const iterationsValidation = InputValidator.validatePositiveNumber(options.iterations, 'iterations');
+      if (!iterationsValidation.valid) {
+        throw new AnimationError(
+          iterationsValidation.error!,
+          ErrorCode.INVALID_NUMBER_INPUT,
+          { iterations: options.iterations }
+        );
+      }
+    }
+    
     this.options = {
       duration: 1000,
       interval: 100,
       iterations: Infinity,
       ...options
     };
+    
+    // Generate unique component ID for cursor management
+    this.componentId = `animation-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Register with ResourceManager for automatic cleanup
+    ResourceManager.register(this);
   }
 
   start(): void {
-    if (this.running) return;
+    if (this.running || this.isDisposed) return;
+    
+    // Atomic disposal: Clear any existing interval BEFORE creating new one
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+      this.intervalId = undefined;
+    }
+    
     this.running = true;
     
-    process.stdout.write(hideCursor());
+    // Hide cursor using cursor manager
+    cursorManager.hide(this.componentId);
     
-    let frame = 1;
-    let iteration = 0;
+    // Resume from paused state or start fresh
+    let frame = this.pausedFrame || 1;
+    let iteration = this.pausedIteration || 0;
     const totalFrames = Math.floor((this.options.duration || 1000) / (this.options.interval || 100));
     
     this.intervalId = setInterval(() => {
+      // Double-check disposal state to prevent zombie timers
+      if (this.isDisposed || !this.running) {
+        this.stop();
+        return;
+      }
+      
       const progress = (frame % totalFrames) / totalFrames;
       
-      process.stdout.write(cursorPosition(0, 0) + eraseLine());
+      const success = safeExecute(() => {
+        if (typeof process !== 'undefined' && process.stdout) {
+          // Use carriage return to go to beginning of current line instead of absolute positioning
+          process.stdout.write('\r' + eraseLine());
+          
+          switch (this.type) {
+            case 'blink':
+              this.renderBlink(progress);
+              break;
+            case 'pulse':
+              this.renderPulse(progress);
+              break;
+            case 'slide':
+              this.renderSlide(progress);
+              break;
+            case 'typewriter':
+              this.renderTypewriter(progress);
+              break;
+            case 'fade':
+              this.renderFade(progress);
+              break;
+          }
+          return true;
+        }
+        return false;
+      }, false);
       
-      switch (this.type) {
-        case 'blink':
-          this.renderBlink(progress);
-          break;
-        case 'pulse':
-          this.renderPulse(progress);
-          break;
-        case 'slide':
-          this.renderSlide(progress);
-          break;
-        case 'typewriter':
-          this.renderTypewriter(progress);
-          break;
-        case 'fade':
-          this.renderFade(progress);
-          break;
+      if (!success) {
+        this.stop();
+        return;
       }
       
       frame++;
@@ -73,6 +162,10 @@ export class Animation {
           }
         }
       }
+      
+      // Update paused state in case of pause
+      this.pausedFrame = frame;
+      this.pausedIteration = iteration;
     }, this.options.interval);
   }
 
@@ -82,7 +175,51 @@ export class Animation {
       this.intervalId = undefined;
     }
     this.running = false;
-    process.stdout.write(showCursor());
+    
+    // Reset paused state on stop
+    this.pausedFrame = 0;
+    this.pausedIteration = 0;
+    
+    // Show cursor using cursor manager
+    if (!this.isDisposed) {
+      cursorManager.show(this.componentId);
+    }
+  }
+  
+  pause(frame?: number, iteration?: number): void {
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+      this.intervalId = undefined;
+    }
+    this.running = false;
+    
+    // Save current state if provided
+    if (frame !== undefined) {
+      this.pausedFrame = frame;
+    }
+    if (iteration !== undefined) {
+      this.pausedIteration = iteration;
+    }
+  }
+  
+  resume(): void {
+    if (!this.running && !this.isDisposed) {
+      this.start();
+    }
+  }
+  
+  dispose(): void {
+    if (this.isDisposed) return;
+    this.isDisposed = true;
+    
+    // Unregister from ResourceManager
+    ResourceManager.unregister(this);
+    
+    // Stop animation
+    this.stop();
+    
+    // Ensure cursor is shown by this component
+    cursorManager.show(this.componentId);
   }
 
   private renderBlink(progress: number): void {
@@ -163,18 +300,31 @@ export const spinners = {
 
 export type SpinnerName = keyof typeof spinners;
 
-export class Spinner {
+export class Spinner implements Disposable {
   private frames: string[];
   private currentFrame = 0;
   private intervalId?: NodeJS.Timeout;
   private running = false;
   private interval: number;
+  private isDisposed = false;
+  private componentId: string;
 
   constructor(
     private text: string,
     spinnerOrOptions?: SpinnerName | { spinner?: SpinnerName | string; color?: string; interval?: number },
     interval?: number
   ) {
+    // Validate text input
+    const textValidation = InputValidator.validateText(text);
+    if (!textValidation.valid) {
+      throw new AnimationError(
+        textValidation.error!,
+        ErrorCode.INVALID_TEXT_INPUT,
+        { text }
+      );
+    }
+    this.text = textValidation.value!.text;
+    
     let spinnerName: SpinnerName = 'dots';
     let finalInterval = 80;
 
@@ -184,6 +334,18 @@ export class Spinner {
     } else if (spinnerOrOptions && typeof spinnerOrOptions === 'object') {
       spinnerName = (spinnerOrOptions.spinner as SpinnerName) ?? 'dots';
       finalInterval = spinnerOrOptions.interval ?? spinners[spinnerName]?.interval ?? 80;
+    }
+    
+    // Validate interval
+    if (finalInterval) {
+      const intervalValidation = InputValidator.validatePositiveNumber(finalInterval, 'interval');
+      if (!intervalValidation.valid) {
+        throw new AnimationError(
+          intervalValidation.error!,
+          ErrorCode.INVALID_NUMBER_INPUT,
+          { interval: finalInterval }
+        );
+      }
     }
 
     // Handle invalid spinner names gracefully
@@ -196,18 +358,46 @@ export class Spinner {
       this.frames = [...spinners.dots.frames];
       this.interval = finalInterval;
     }
+    
+    // Generate unique component ID for cursor management
+    this.componentId = `spinner-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Register with ResourceManager for automatic cleanup
+    ResourceManager.register(this);
   }
 
   start(): void {
-    if (this.running) return;
+    if (this.running || this.isDisposed) return;
+    
+    // Clear any existing interval
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+    }
+    
     this.running = true;
     
-    process.stdout.write(hideCursor());
+    // Hide cursor using cursor manager
+    cursorManager.hide(this.componentId);
     
     this.intervalId = setInterval(() => {
-      const frame = this.frames[this.currentFrame];
-      process.stdout.write(`\r${frame} ${this.text}`);
-      this.currentFrame = (this.currentFrame + 1) % this.frames.length;
+      if (this.isDisposed) {
+        this.stop();
+        return;
+      }
+      
+      const success = safeExecute(() => {
+        if (typeof process !== 'undefined' && process.stdout) {
+          const frame = this.frames[this.currentFrame];
+          process.stdout.write(`\r${frame} ${this.text}`);
+          this.currentFrame = (this.currentFrame + 1) % this.frames.length;
+          return true;
+        }
+        return false;
+      }, false);
+      
+      if (!success) {
+        this.stop();
+      }
     }, this.interval);
   }
 
@@ -217,11 +407,20 @@ export class Spinner {
       this.intervalId = undefined;
     }
     this.running = false;
-    process.stdout.write('\r' + eraseLine());
-    if (finalText) {
-      process.stdout.write(finalText);
+    
+    if (!this.isDisposed) {
+      safeExecute(() => {
+        if (typeof process !== 'undefined' && process.stdout) {
+          process.stdout.write('\r' + eraseLine());
+          if (finalText) {
+            process.stdout.write(finalText);
+          }
+          process.stdout.write('\n');
+        }
+        // Show cursor using cursor manager
+        cursorManager.show(this.componentId);
+      }, undefined);
     }
-    process.stdout.write(showCursor() + '\n');
   }
 
   update(text: string): void {
@@ -254,8 +453,36 @@ export class Spinner {
       this.intervalId = undefined;
     }
     this.running = false;
-    process.stdout.write('\r' + eraseLine());
-    process.stdout.write(showCursor());
+    
+    if (!this.isDisposed) {
+      safeExecute(() => {
+        if (typeof process !== 'undefined' && process.stdout) {
+          process.stdout.write('\r' + eraseLine());
+        }
+        // Show cursor using cursor manager
+        cursorManager.show(this.componentId);
+      }, undefined);
+    }
+  }
+  
+  dispose(): void {
+    if (this.isDisposed) return;
+    this.isDisposed = true;
+    
+    // Ensure interval is cleared first
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+      this.intervalId = undefined;
+    }
+    
+    // Unregister from ResourceManager
+    ResourceManager.unregister(this);
+    
+    // Clear animation
+    this.clear();
+    
+    // Ensure cursor is shown by this component
+    cursorManager.show(this.componentId);
   }
 }
 

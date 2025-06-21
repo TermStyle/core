@@ -1,5 +1,8 @@
-import { ansiCode, ansiCodes, rgb, bgRgb, hexToRgb, ansi256, bgAnsi256, rgbToAnsi256 } from '../core/ansi';
+import { ansiCode, ansiCodes, rgb, bgRgb, ansi256, bgAnsi256, rgbToAnsi256 } from '../core/ansi';
 import { terminal } from '../utils/terminal';
+import { InputValidator } from '../core/validators';
+import { ValidationError, ErrorCode } from '../core/errors';
+import { ColorProcessor } from '../core/color-processor';
 
 export type ColorInput = string | number | [number, number, number];
 
@@ -66,12 +69,15 @@ export class Style {
         }
         
         // Remove in reverse order to maintain indices
-        for (const index of indicesToRemove) {
-          newCodes.splice(index, 1);
-          // Safe bounds checking for reset codes
-          const resetIndex = newResetCodes.length - 1 - (newCodes.length - index);
-          if (resetIndex >= 0 && resetIndex < newResetCodes.length) {
-            newResetCodes.splice(resetIndex, 1);
+        for (let i = indicesToRemove.length - 1; i >= 0; i--) {
+          const index = indicesToRemove[i];
+          if (index >= 0 && index < newCodes.length) {
+            newCodes.splice(index, 1);
+            // Calculate reset index safely with proper bounds checking
+            const resetIndex = Math.min(newResetCodes.length - 1, Math.max(0, newResetCodes.length - 1 - i));
+            if (resetIndex >= 0 && resetIndex < newResetCodes.length) {
+              newResetCodes.splice(resetIndex, 1);
+            }
           }
         }
       }
@@ -93,12 +99,15 @@ export class Style {
         }
         
         // Remove in reverse order to maintain indices
-        for (const index of indicesToRemove) {
-          newCodes.splice(index, 1);
-          // Safe bounds checking for reset codes
-          const resetIndex = newResetCodes.length - 1 - (newCodes.length - index);
-          if (resetIndex >= 0 && resetIndex < newResetCodes.length) {
-            newResetCodes.splice(resetIndex, 1);
+        for (let i = indicesToRemove.length - 1; i >= 0; i--) {
+          const index = indicesToRemove[i];
+          if (index >= 0 && index < newCodes.length) {
+            newCodes.splice(index, 1);
+            // Calculate reset index safely with proper bounds checking
+            const resetIndex = Math.min(newResetCodes.length - 1, Math.max(0, newResetCodes.length - 1 - i));
+            if (resetIndex >= 0 && resetIndex < newResetCodes.length) {
+              newResetCodes.splice(resetIndex, 1);
+            }
           }
         }
       }
@@ -119,14 +128,22 @@ export class Style {
   }
 
   apply(text: string): string {
+    // Validate text input
+    const validation = InputValidator.validateText(text);
+    if (!validation.valid) {
+      return '';
+    }
+    
+    const validatedText = validation.value!.text;
+    
     if (!this.shouldApplyStyle() || this.codes.length === 0) {
-      return text;
+      return validatedText;
     }
 
     const openCodes = this.codes.map(code => ansiCode(code)).join('');
     const closeCodes = this.resetCodes.map(code => ansiCode(code)).join('');
     
-    return openCodes + text + closeCodes;
+    return openCodes + validatedText + closeCodes;
   }
 
   get bold(): Style {
@@ -240,14 +257,23 @@ export class Style {
   color(color: ColorInput): Style {
     const level = this.options.level ?? terminal().colorLevel;
     
-    if (typeof color === 'string') {
-      if (color.startsWith('#') || /^[0-9a-fA-F]{6}$/.test(color)) {
-        const [r, g, b] = hexToRgb(color);
-        return this.color([r, g, b]);
+    // Validate color input
+    const validation = InputValidator.validateColor(color);
+    if (!validation.valid) {
+      if (process.env.NODE_ENV === 'development') {
+        throw new ValidationError(
+          validation.error!,
+          ErrorCode.INVALID_COLOR_INPUT,
+          { input: color }
+        );
       }
-      
-      // Handle named colors
-      const namedColors: Record<string, number> = {
+      // In production, return unchanged style
+      return this;
+    }
+    
+    // Check if it's a basic named color first
+    if (typeof color === 'string') {
+      const basicColors: Record<string, number> = {
         black: ansiCodes.black,
         red: ansiCodes.red,
         green: ansiCodes.green,
@@ -260,28 +286,51 @@ export class Style {
         grey: ansiCodes.brightBlack
       };
       
-      if (color in namedColors) {
-        return this.addStyle(String(namedColors[color]), String(ansiCodes.defaultColor));
+      const colorLower = color.toLowerCase();
+      if (colorLower in basicColors && level >= 1) {
+        return this.addStyle(String(basicColors[colorLower]), String(ansiCodes.defaultColor));
       }
       
-      return this;
+      // Check if it's a hex color without # prefix
+      if (/^[0-9a-fA-F]{6}$/.test(color)) {
+        // Add # prefix and process as hex
+        const [r, g, b] = ColorProcessor.processColor('#' + color);
+        if (this.options.force || level >= 3) {
+          return this.addStyle(rgb(r, g, b), String(ansiCodes.defaultColor));
+        } else if (level >= 2) {
+          const code = rgbToAnsi256(r, g, b);
+          return this.addStyle(ansi256(code), String(ansiCodes.defaultColor));
+        }
+      }
+      
+      // Check if it's a valid color name or hex with #
+      if (!ColorProcessor.isValidColorName(color) && !ColorProcessor.isValidHex(color)) {
+        // Invalid color name - return unchanged
+        return this;
+      }
     }
-
+    
+    // Handle ANSI 256 color codes
     if (typeof color === 'number') {
       if (level >= 2) {
         return this.addStyle(ansi256(color), String(ansiCodes.defaultColor));
+      } else {
+        // No support for 256 colors at basic level
+        return this;
       }
-      return this;
     }
-
-    if (Array.isArray(color)) {
-      const [r, g, b] = color;
-      if (this.options.force || level >= 3) {
-        return this.addStyle(rgb(r, g, b), String(ansiCodes.defaultColor));
-      } else if (level >= 2) {
-        const code = rgbToAnsi256(r, g, b);
-        return this.addStyle(ansi256(code), String(ansiCodes.defaultColor));
-      }
+    
+    // Use ColorProcessor for RGB colors
+    const [r, g, b] = ColorProcessor.processColor(color);
+    
+    if (this.options.force || level >= 3) {
+      return this.addStyle(rgb(r, g, b), String(ansiCodes.defaultColor));
+    } else if (level >= 2) {
+      const code = rgbToAnsi256(r, g, b);
+      return this.addStyle(ansi256(code), String(ansiCodes.defaultColor));
+    } else if (level >= 1) {
+      // Basic color level (1) doesn't support RGB arrays
+      return this;
     }
 
     return this;
@@ -290,14 +339,23 @@ export class Style {
   bgColor(color: ColorInput): Style {
     const level = this.options.level ?? terminal().colorLevel;
     
-    if (typeof color === 'string') {
-      if (color.startsWith('#') || /^[0-9a-fA-F]{6}$/.test(color)) {
-        const [r, g, b] = hexToRgb(color);
-        return this.bgColor([r, g, b]);
+    // Validate color input
+    const validation = InputValidator.validateColor(color);
+    if (!validation.valid) {
+      if (process.env.NODE_ENV === 'development') {
+        throw new ValidationError(
+          validation.error!,
+          ErrorCode.INVALID_COLOR_INPUT,
+          { input: color }
+        );
       }
-      
-      // Handle named colors
-      const namedBgColors: Record<string, number> = {
+      // In production, return unchanged style
+      return this;
+    }
+    
+    // Check if it's a basic named color first
+    if (typeof color === 'string') {
+      const basicBgColors: Record<string, number> = {
         black: ansiCodes.bgBlack,
         red: ansiCodes.bgRed,
         green: ansiCodes.bgGreen,
@@ -310,38 +368,83 @@ export class Style {
         grey: ansiCodes.bgBrightBlack
       };
       
-      if (color in namedBgColors) {
-        return this.addStyle(String(namedBgColors[color]), String(ansiCodes.bgDefaultColor));
+      const colorLower = color.toLowerCase();
+      if (colorLower in basicBgColors && level >= 1) {
+        return this.addStyle(String(basicBgColors[colorLower]), String(ansiCodes.bgDefaultColor));
       }
+    }
+    
+    // Handle ANSI 256 color codes
+    if (typeof color === 'number' && level >= 2) {
+      return this.addStyle(bgAnsi256(color), String(ansiCodes.bgDefaultColor));
+    }
+    
+    // Use ColorProcessor for RGB colors
+    const [r, g, b] = ColorProcessor.processColor(color);
+    
+    if (this.options.force || level >= 3) {
+      return this.addStyle(bgRgb(r, g, b), String(ansiCodes.bgDefaultColor));
+    } else if (level >= 2) {
+      const code = rgbToAnsi256(r, g, b);
+      return this.addStyle(bgAnsi256(code), String(ansiCodes.bgDefaultColor));
+    } else if (level >= 1) {
+      // Fallback to basic background colors for RGB values
+      const brightness = (r + g + b) / 3;
+      let closestColor = 'white';
+      if (brightness < 64) closestColor = 'black';
+      else if (r > g && r > b) closestColor = 'red';
+      else if (g > r && g > b) closestColor = 'green';
+      else if (b > r && b > g) closestColor = 'blue';
+      else if (r > 128 && g > 128) closestColor = 'yellow';
+      else if (r > 128 && b > 128) closestColor = 'magenta';
+      else if (g > 128 && b > 128) closestColor = 'cyan';
       
-      return this;
-    }
-
-    if (typeof color === 'number') {
-      if (level >= 2) {
-        return this.addStyle(bgAnsi256(color), String(ansiCodes.bgDefaultColor));
-      }
-      return this;
-    }
-
-    if (Array.isArray(color)) {
-      const [r, g, b] = color;
-      if (this.options.force || level >= 3) {
-        return this.addStyle(bgRgb(r, g, b), String(ansiCodes.bgDefaultColor));
-      } else if (level >= 2) {
-        const code = rgbToAnsi256(r, g, b);
-        return this.addStyle(bgAnsi256(code), String(ansiCodes.bgDefaultColor));
-      }
+      const basicBgColors: Record<string, number> = {
+        black: ansiCodes.bgBlack,
+        red: ansiCodes.bgRed,
+        green: ansiCodes.bgGreen,
+        yellow: ansiCodes.bgYellow,
+        blue: ansiCodes.bgBlue,
+        magenta: ansiCodes.bgMagenta,
+        cyan: ansiCodes.bgCyan,
+        white: ansiCodes.bgWhite
+      };
+      
+      return this.addStyle(String(basicBgColors[closestColor]), String(ansiCodes.bgDefaultColor));
     }
 
     return this;
   }
 
   rgb(r: number, g: number, b: number): Style {
+    // Validate individual RGB values
+    const validation = InputValidator.validateColor([r, g, b]);
+    if (!validation.valid) {
+      if (process.env.NODE_ENV === 'development') {
+        throw new ValidationError(
+          validation.error!,
+          ErrorCode.INVALID_COLOR_INPUT,
+          { r, g, b }
+        );
+      }
+      return this;
+    }
     return this.color([r, g, b]);
   }
 
   bgRgb(r: number, g: number, b: number): Style {
+    // Validate individual RGB values
+    const validation = InputValidator.validateColor([r, g, b]);
+    if (!validation.valid) {
+      if (process.env.NODE_ENV === 'development') {
+        throw new ValidationError(
+          validation.error!,
+          ErrorCode.INVALID_COLOR_INPUT,
+          { r, g, b }
+        );
+      }
+      return this;
+    }
     return this.bgColor([r, g, b]);
   }
 

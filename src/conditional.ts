@@ -34,7 +34,7 @@ export class ConditionalFormatter {
     
     // Handle explicit undefined defaultStyle
     if (options && typeof options === 'object' && 'defaultStyle' in options && options.defaultStyle === undefined) {
-      this.options.defaultStyle = undefined as any;
+      this.options.defaultStyle = undefined;
     }
 
     // If condition is provided, create a conditional formatter
@@ -274,7 +274,7 @@ conditional.when = function(condition: Condition | (() => Promise<boolean>), tex
     if (typeof condition === 'function') {
       const result = condition();
       // Handle async functions that return promises
-      if (result && typeof (result as any).then === 'function') {
+      if (result && typeof result === 'object' && 'then' in result && typeof result.then === 'function') {
         return (result as Promise<boolean>).then((isTrue: boolean) => {
           if (isTrue && style) {
             if (typeof style === 'string') {

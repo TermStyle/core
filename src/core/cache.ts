@@ -216,7 +216,7 @@ export function memoize<T extends (...args: any[]) => any>(
 
 // Batch processing for efficiency
 export class BatchProcessor<T, R> {
-  private queue: Array<{ item: T; resolve: (value: R) => void }> = [];
+  private queue: Array<{ item: T; resolve: (value: R) => void; reject: (error: Error) => void }> = [];
   private processing = false;
   private batchTimeout?: NodeJS.Timeout;
 
@@ -227,8 +227,8 @@ export class BatchProcessor<T, R> {
   ) {}
 
   async process(item: T): Promise<R> {
-    return new Promise<R>((resolve) => {
-      this.queue.push({ item, resolve });
+    return new Promise<R>((resolve, reject) => {
+      this.queue.push({ item, resolve, reject });
       this.scheduleBatch();
     });
   }
@@ -264,9 +264,9 @@ export class BatchProcessor<T, R> {
         b.resolve(results[i]);
       });
     } catch (error) {
-      // Reject all promises in the batch
+      // Reject all promises in the batch with proper error handling
       batch.forEach(b => {
-        b.resolve(null as any); // Or handle error appropriately
+        b.reject(error instanceof Error ? error : new Error(String(error)));
       });
     } finally {
       this.processing = false;

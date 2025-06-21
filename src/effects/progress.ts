@@ -1,5 +1,10 @@
-import { cursorPosition, eraseLine, hideCursor, showCursor } from '../core/ansi';
+import { eraseLine } from '../core/ansi';
 import { Style } from '../styles/style';
+import { ResourceManager, Disposable } from '../core/resource-manager';
+import { cursorManager } from '../core/cursor-manager';
+import { safeExecute, safeDivide } from '../core/safe-utils';
+import { InputValidator } from '../core/validators';
+import { ValidationError, ConfigurationError, ErrorCode } from '../core/errors';
 
 export interface ProgressBarOptions {
   total?: number;
@@ -15,13 +20,70 @@ export interface ProgressBarOptions {
   completeColor?: string | [number, number, number];
 }
 
-export class ProgressBar {
+export class ProgressBar implements Disposable {
   private current = 0;
   private startTime = Date.now();
   private lastRender = 0;
   private options: Required<ProgressBarOptions>;
+  private isDisposed = false;
+  private componentId: string;
 
   constructor(options: ProgressBarOptions = {}) {
+    // Validate options
+    if (options.total !== undefined) {
+      if (typeof options.total !== 'number' || !Number.isFinite(options.total) || options.total < 0) {
+        throw new ConfigurationError(
+          'total must be a non-negative number',
+          ErrorCode.CONFIG_INVALID_OPTION,
+          { option: 'total', value: options.total }
+        );
+      }
+    }
+    
+    if (options.width !== undefined) {
+      const validation = InputValidator.validatePositiveNumber(options.width, 'width');
+      if (!validation.valid) {
+        throw new ConfigurationError(
+          validation.error!,
+          ErrorCode.CONFIG_INVALID_OPTION,
+          { option: 'width', value: options.width }
+        );
+      }
+    }
+    
+    if (options.renderThrottle !== undefined) {
+      const validation = InputValidator.validatePositiveNumber(options.renderThrottle, 'renderThrottle');
+      if (!validation.valid) {
+        throw new ConfigurationError(
+          validation.error!,
+          ErrorCode.CONFIG_INVALID_OPTION,
+          { option: 'renderThrottle', value: options.renderThrottle }
+        );
+      }
+    }
+    
+    if (options.barColor !== undefined) {
+      const validation = InputValidator.validateColor(options.barColor);
+      if (!validation.valid) {
+        throw new ConfigurationError(
+          validation.error!,
+          ErrorCode.INVALID_COLOR_INPUT,
+          { option: 'barColor', value: options.barColor }
+        );
+      }
+    }
+    
+    if (options.completeColor !== undefined) {
+      const validation = InputValidator.validateColor(options.completeColor);
+      if (!validation.valid) {
+        throw new ConfigurationError(
+          validation.error!,
+          ErrorCode.INVALID_COLOR_INPUT,
+          { option: 'completeColor', value: options.completeColor }
+        );
+      }
+    }
+    
     this.options = {
       total: 100,
       width: 40,
@@ -36,32 +98,65 @@ export class ProgressBar {
       completeColor: '',
       ...options
     };
+    
+    // Generate unique component ID for cursor management
+    this.componentId = `progress-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Register with ResourceManager for automatic cleanup
+    ResourceManager.register(this);
   }
 
   tick(delta = 1, tokens?: Record<string, string>): void {
+    if (this.isDisposed) return;
+    
+    // Validate delta
+    if (typeof delta !== 'number' || !Number.isFinite(delta)) {
+      throw new ValidationError(
+        'Delta must be a finite number',
+        ErrorCode.INVALID_NUMBER_INPUT,
+        { delta }
+      );
+    }
+    
     const oldCurrent = this.current;
     this.current = Math.min(this.current + delta, this.options.total);
     this.render(tokens, oldCurrent !== this.current);
   }
 
   update(current: number, tokens?: Record<string, string>): void {
+    if (this.isDisposed) return;
+    
+    // Validate current value
+    if (typeof current !== 'number' || !Number.isFinite(current)) {
+      throw new ValidationError(
+        'Current value must be a finite number',
+        ErrorCode.INVALID_NUMBER_INPUT,
+        { current }
+      );
+    }
+    
     this.current = Math.max(0, Math.min(current, this.options.total));
     this.render(tokens);
   }
 
   private render(tokens?: Record<string, string>, forceRender = false): void {
+    if (this.isDisposed) return;
+    
     const now = Date.now();
     if (!forceRender && this.options.renderThrottle > 0 && now - this.lastRender < this.options.renderThrottle && this.current < this.options.total) {
       return;
     }
     this.lastRender = now;
 
-    const percent = this.options.total > 0 ? this.current / this.options.total : 0;
+    // Ensure percent is between 0 and 1
+    const rawPercent = safeDivide(this.current, this.options.total);
+    const percent = Math.max(0, Math.min(1, rawPercent));
+    
     const filledLength = Math.max(0, Math.floor(this.options.width * percent));
     const emptyLength = Math.max(0, this.options.width - filledLength);
 
-    let filled = this.options.complete.repeat(filledLength);
-    const empty = this.options.incomplete.repeat(emptyLength);
+    let filled = this.options.complete.repeat(Math.max(0, filledLength));
+    const empty = this.options.incomplete.repeat(Math.max(0, emptyLength));
 
     if (this.options.head && filledLength > 0 && filledLength < this.options.width) {
       filled = filled.slice(0, -1) + this.options.head;
@@ -100,38 +195,190 @@ export class ProgressBar {
         : style.color(this.options.completeColor).apply(output);
     }
 
-    this.options.stream.write('\r' + eraseLine() + output);
-
-    if (percent === 1) {
-      if (this.options.clear) {
-        this.options.stream.write('\r' + eraseLine());
-      } else {
-        this.options.stream.write('\n');
-      }
-    }
+    safeExecute(() => {
+      // Hide cursor on first render using cursor manager
+      cursorManager.hide(this.componentId);
+      
+      this.options.stream.write('\r' + eraseLine() + output);
+    }, undefined, () => {
+      // Handle stream errors gracefully
+      this.dispose();
+    });
   }
 
+
   private formatTime(seconds: number): string {
+    if (!isFinite(seconds) || seconds < 0) return '0:00';
+    
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = Math.floor(seconds % 60);
 
     if (hours > 0) {
-      return `${hours}h${minutes}m`;
-    } else if (minutes > 0) {
-      return `${minutes}m${secs}s`;
-    } else {
-      return `${secs}s`;
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
   }
 
   complete(): void {
-    this.update(this.options.total);
+    if (this.isDisposed) return;
+    
+    this.current = this.options.total;
+    this.render();
+    
+    try {
+      this.options.stream.write('\n');
+      
+      // Show cursor using cursor manager
+      cursorManager.show(this.componentId);
+      
+      if (this.options.clear) {
+        this.options.stream.write('\r' + eraseLine());
+      }
+    } catch (error) {
+      // Ignore stream errors during completion
+    }
+    
+    this.dispose();
+  }
+
+  getRenderString(): string {
+    const percent = safeDivide(this.current, this.options.total);
+    const filledLength = Math.max(0, Math.floor(this.options.width * percent));
+    const emptyLength = Math.max(0, this.options.width - filledLength);
+
+    let filled = this.options.complete.repeat(filledLength);
+    const empty = this.options.incomplete.repeat(emptyLength);
+
+    if (this.options.head && filledLength > 0 && filledLength < this.options.width) {
+      filled = filled.slice(0, -1) + this.options.head;
+    }
+
+    const bar = filled + empty;
+    const elapsed = (Date.now() - this.startTime) / 1000;
+    const eta = percent > 0 ? (elapsed / percent - elapsed) : 0;
+
+    return this.options.format
+      .replace(':bar', bar)
+      .replace(':percent', `${Math.floor(percent * 100)}%`)
+      .replace(':current', String(this.current))
+      .replace(':total', String(this.options.total))
+      .replace(':elapsed', this.formatTime(elapsed))
+      .replace(':etas', eta > 0 ? this.formatTime(eta) : '')
+      .replace(':eta', this.formatTime(eta));
+  }
+  
+  dispose(): void {
+    if (this.isDisposed) return;
+    this.isDisposed = true;
+    
+    // Unregister from ResourceManager
+    ResourceManager.unregister(this);
+    
+    // Show cursor using cursor manager
+    cursorManager.show(this.componentId);
+  }
+}
+
+export interface MultiProgressOptions {
+  total?: number;
+  width?: number;
+  complete?: string;
+  incomplete?: string;
+  stream?: NodeJS.WriteStream;
+}
+
+export class MultiProgress implements Disposable {
+  private bars: ProgressBar[] = [];
+  private options: Required<MultiProgressOptions>;
+  private isDisposed = false;
+
+  constructor(options: MultiProgressOptions = {}) {
+    this.options = {
+      total: 100,
+      width: 40,
+      complete: '█',
+      incomplete: '░',
+      stream: process.stdout,
+      ...options
+    };
+    
+    // Register with ResourceManager for automatic cleanup
+    ResourceManager.register(this);
+  }
+
+  newBar(format: string, options?: ProgressBarOptions): ProgressBar {
+    if (this.isDisposed) {
+      throw new Error('MultiProgress has been disposed');
+    }
+    
+    const bar = new ProgressBar({
+      format,
+      ...this.options,
+      ...options,
+      stream: this.options.stream
+    });
+    
+    this.bars.push(bar);
+    return bar;
+  }
+
+  render(): void {
+    if (this.isDisposed) return;
+    
+    safeExecute(() => {
+      // Move cursor up to overwrite previous bars
+      if (this.bars.length > 0) {
+        // Use relative cursor movement instead of absolute positioning
+        for (let i = 0; i < this.bars.length; i++) {
+          this.options.stream.write('\u001b[1A'); // Move up one line
+        }
+      }
+
+      // Render each bar
+      this.bars.forEach((bar, index) => {
+        this.options.stream.write('\r' + eraseLine() + bar.getRenderString());
+        if (index < this.bars.length - 1) {
+          this.options.stream.write('\n');
+        }
+      });
+    }, undefined, () => {
+      // Handle stream errors
+      this.dispose();
+    });
+  }
+
+  update(): void {
+    this.render();
+  }
+  
+  dispose(): void {
+    if (this.isDisposed) return;
+    this.isDisposed = true;
+    
+    // Unregister from ResourceManager
+    ResourceManager.unregister(this);
+    
+    // Dispose all bars safely
+    const barsToDispose = [...this.bars];
+    this.bars = [];
+    
+    barsToDispose.forEach(bar => {
+      try {
+        bar.dispose();
+      } catch (error) {
+        console.warn('Error disposing progress bar:', error);
+      }
+    });
   }
 }
 
 export function progressBar(options?: ProgressBarOptions): ProgressBar {
   return new ProgressBar(options);
+}
+
+export function multiProgress(options?: MultiProgressOptions): MultiProgress {
+  return new MultiProgress(options);
 }
 
 // Add bar method for backward compatibility
@@ -149,64 +396,3 @@ export function bar(current: number, total: number, options?: ProgressBarOptions
   
   return complete.repeat(filledLength) + incomplete.repeat(emptyLength);
 }
-
-export interface MultiProgressOptions {
-  stream?: NodeJS.WriteStream;
-  clearOnComplete?: boolean;
-}
-
-export class MultiProgress {
-  private bars: Map<string, { bar: ProgressBar; line: number }> = new Map();
-  private currentLine = 0;
-  private options: MultiProgressOptions;
-
-  constructor(options: MultiProgressOptions = {}) {
-    this.options = {
-      stream: process.stdout,
-      clearOnComplete: false,
-      ...options
-    };
-    
-    this.options.stream?.write(hideCursor());
-  }
-
-  create(id: string, options: ProgressBarOptions): ProgressBar {
-    const bar = new ProgressBar({
-      ...options,
-      stream: this.options.stream
-    });
-    
-    this.bars.set(id, { bar, line: this.currentLine++ });
-    return bar;
-  }
-
-  newBar(label: string, options: ProgressBarOptions): ProgressBar {
-    return this.create(label, options);
-  }
-
-  remove(id: string): void {
-    this.bars.delete(id);
-  }
-
-  terminate(): void {
-    if (this.options.clearOnComplete) {
-      for (let i = 0; i < this.currentLine; i++) {
-        this.options.stream?.write(cursorPosition(0, i) + eraseLine());
-      }
-    }
-    this.options.stream?.write(showCursor());
-  }
-}
-
-export function multiProgress(options?: MultiProgressOptions): MultiProgress {
-  return new MultiProgress(options);
-}
-
-// Export default for CommonJS compatibility
-export default Object.assign(progressBar, {
-  progressBar,
-  bar,
-  ProgressBar,
-  multiProgress,
-  MultiProgress
-});

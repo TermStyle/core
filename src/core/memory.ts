@@ -82,30 +82,32 @@ export class StylePool {
   private constructor() {
     this.pool = new ObjectPool(
       () => {
-        const style = new Style([]) as any as PoolableStyle;
+        const baseStyle = new Style([]);
+        const style = baseStyle as Style & PoolableStyle & { _codes?: string[]; _open?: string; _close?: string };
+        
         // Ensure the style has the required methods
         if (!style.setCodes) {
-          (style as any).setCodes = function(codes: string[]) {
-            (this as any)._codes = codes;
-            (this as any)._open = undefined;
-            (this as any)._close = undefined;
+          style.setCodes = function(codes: string[]) {
+            this._codes = codes;
+            this._open = undefined;
+            this._close = undefined;
           };
         }
         if (!style.getCodes) {
-          (style as any).getCodes = function() {
-            return (this as any)._codes || [];
+          style.getCodes = function() {
+            return this._codes || [];
           };
         }
         if (!style.reset) {
-          (style as any).reset = function() {
-            (this as any)._codes = [];
-            (this as any)._open = undefined;
-            (this as any)._close = undefined;
+          style.reset = function() {
+            this._codes = [];
+            this._open = undefined;
+            this._close = undefined;
           };
         }
-        if (!style.format && !(style as any).format) {
-          (style as any).format = function(text: string) {
-            const codes = (this as any)._codes || [];
+        if (!style.format) {
+          style.format = function(text: string) {
+            const codes = this._codes || [];
             if (codes.length === 0) return text;
             return `\x1b[${codes.join(';')}m${text}\x1b[0m`;
           };
@@ -160,8 +162,9 @@ export class StylePool {
   }
 
   private addToCache(key: string, style: PoolableStyle): void {
-    if (this.styleCache.size >= this.maxCacheSize) {
-      // Evict oldest
+    // Implement proper LRU eviction with size limits
+    while (this.styleCache.size >= this.maxCacheSize) {
+      // Evict oldest entry
       const oldest = this.lru.values().next().value;
       if (oldest !== undefined) {
         const oldStyle = this.styleCache.get(oldest);
@@ -170,6 +173,10 @@ export class StylePool {
           this.lru.delete(oldest);
           this.pool.release(oldStyle);
         }
+      } else {
+        // Fallback: clear entire cache if LRU is corrupted
+        this.clearCache();
+        break;
       }
     }
     
